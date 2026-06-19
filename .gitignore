@@ -1,0 +1,14 @@
+node_modules/
+.DS_Store
+dist/
+*.log
+.env
+.env.*
+!.env.example
+.next/
+node_modules/
+.env
+.env.*
+!.env.example
+.next/
+dist/
