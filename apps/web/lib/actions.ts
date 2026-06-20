@@ -96,6 +96,109 @@ export async function intakeCreate(input: IntakeInput): Promise<ActionResult<{ c
   return { ok: true, customerId: customer.id };
 }
 
+// ---- In-store buy (tap-to-increment) ---------------------------------------
+//
+// The in-store engine is "everything optional": the credit (or cash) paid is an
+// explicit paying-out total, NOT derived from item prices, and items may be
+// unpriced category stubs. This maps onto the SAME domain `createIntake`, which
+// already takes `creditCents` explicitly and price-optional item stubs — so no
+// engine change is needed. We never auto-split a line's group total across its
+// items; that total only feeds the paying-out figure the owner committed.
+
+export interface BuySlotInput {
+  name?: string;
+  priceCents?: number;
+  /** Scaled-down advanced detail (size/condition/brand) + free note. */
+  attributes?: Record<string, unknown>;
+}
+export interface BuyLineInput {
+  itemType: ItemType;
+  /** Display label (e.g. "Clothing") kept on the stub since itemType is coarse. */
+  category: string;
+  qty: number;
+  slots?: BuySlotInput[];
+}
+
+export async function buyCreate(input: {
+  customerId?: string;
+  displayName?: string;
+  phone?: string;
+  payout: 'store_credit' | 'cash';
+  /** The paying-out total (credit issued, or cash paid) — explicit, integer cents. */
+  payoutCents: number;
+  lines: BuyLineInput[];
+  /** Per-buy key so a double-tapped "Load" can't double-post the credit. */
+  idempotencyKey?: string;
+}): Promise<ActionResult<{ customerId: string; balanceCents: number }>> {
+  await requireOwner();
+  if (!Number.isInteger(input.payoutCents) || input.payoutCents <= 0) {
+    return { ok: false, error: 'Enter how much you are paying out.' };
+  }
+  if (!input.customerId && !input.displayName?.trim()) {
+    return { ok: false, error: 'Pick a customer or enter a name.' };
+  }
+
+  // Expand each line into qty stubs; slot detail/price rides on the first
+  // slots, the rest are bare category stubs. Prices are never auto-split.
+  const stubs: Array<{ itemType: ItemType; attributes: Record<string, unknown>; priceCents?: number }> = [];
+  for (const line of input.lines) {
+    const qty = Math.max(1, Math.floor(line.qty));
+    for (let i = 0; i < qty; i++) {
+      const slot = line.slots?.[i];
+      const attributes: Record<string, unknown> = { category: line.category, ...(slot?.attributes ?? {}) };
+      if (slot?.name) attributes.name = slot.name;
+      stubs.push({
+        itemType: line.itemType,
+        attributes,
+        ...(slot?.priceCents !== undefined ? { priceCents: slot.priceCents } : {}),
+      });
+    }
+  }
+
+  // In-store buys are physical goods, so a lump buy with no category taps still
+  // leaves one "Other" pending stub — it appears in the queue to itemize /
+  // photograph later (the "no time" scenario). Pure zero-item credit issuance
+  // (migration / starting balance) is a People-screen concern, not the buy flow.
+  if (stubs.length === 0) stubs.push({ itemType: 'OTHER', attributes: { category: 'Other' } });
+
+  const phone = input.phone?.trim();
+
+  if (input.payout === 'store_credit') {
+    const res = await createIntake(
+      {
+        customer: input.customerId
+          ? { id: input.customerId }
+          : { displayName: input.displayName!.trim(), ...(phone ? { phone } : {}) },
+        creditCents: input.payoutCents,
+        items: stubs,
+        note: 'In-store buy — store credit',
+        ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
+      },
+      { ledger: engine.ledger, customers: engine.customers, drafts: engine.draftRepo },
+    );
+    refreshAll();
+    const balanceCents = await engine.ledger.getBalance(res.customer.id);
+    return { ok: true, customerId: res.customer.id, balanceCents };
+  }
+
+  // Cash payout: post no credit, but the buy MUST be logged (guardrail). We
+  // record the item stubs and stash the cash amount on a stub's attributes so
+  // End of Day can total it. (A first-class cash-payout record would be a
+  // cleaner home — flagged for the EOD phase; this avoids an engine change.)
+  const customer = input.customerId
+    ? await engine.customers.getCustomer(input.customerId)
+    : await resolveCashCustomer({ payout: 'cash', items: [], displayName: input.displayName, ...(phone ? { phone } : {}) });
+  if (!customer) return { ok: false, error: 'Customer not found.' };
+
+  stubs[0]!.attributes.cashPaidCents = input.payoutCents;
+  for (const s of stubs) {
+    await engine.draftRepo.create({ sourceCustomerId: customer.id, itemType: s.itemType, attributes: s.attributes, ...(s.priceCents !== undefined ? { priceCents: s.priceCents } : {}) });
+  }
+  refreshAll();
+  const balanceCents = await engine.ledger.getBalance(customer.id);
+  return { ok: true, customerId: customer.id, balanceCents };
+}
+
 // ---- Credit ----------------------------------------------------------------
 
 export async function redeemCredit(input: {

@@ -11,6 +11,7 @@ import {
   Boxes,
   Settings,
   Moon,
+  Smartphone,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -26,6 +27,7 @@ const TOP: Item[] = [
   { href: '/inventory', label: 'Inventory', icon: Boxes },
 ];
 const BOTTOM: Item[] = [
+  { href: '/store', label: 'Store', icon: Smartphone },
   { href: '/settings', label: 'Settings', icon: Settings },
   { href: '/eod', label: 'End day', icon: Moon },
 ];
