@@ -77,17 +77,22 @@
   .topbar { height: 56px; background: var(--surface); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 16px; padding: 0 24px; position: sticky; top: 0; z-index: 5; }
   .topbar h1 { font-family: var(--ui); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
   .topbar .date { color: var(--muted); font-size: 13px; }
-  .search { margin-left: auto; display: flex; align-items: center; gap: 8px; background: var(--canvas); border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; width: 230px; color: var(--muted); font-size: 13px; }
+  /* seamless: a hairline underline, not a boxed field */
+  .search { margin-left: auto; display: flex; align-items: center; gap: 8px; background: transparent; border: none; border-bottom: 1px solid var(--line); border-radius: 0; padding: 7px 2px; width: 230px; color: var(--muted); font-size: 13px; transition: border-color .12s; }
+  .search:focus-within { border-bottom-color: var(--accent); }
   .search input { border: 0; background: transparent; outline: none; font-family: inherit; font-size: 13px; color: var(--ink); width: 100%; }
 
   /* ---- buttons -------------------------------------------------------- */
-  .btn { font-family: var(--ui); font-size: 13px; font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 7px 13px; border-radius: 8px; cursor: pointer; transition: background .12s, border-color .12s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
-  .btn:hover { background: var(--canvas); }
-  .btn:disabled { opacity: .55; cursor: not-allowed; }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  /* Secondary/icon buttons are unoutlined and floating — no border, no box.
+     Filled buttons (.primary/.danger) keep their container. */
+  .btn { font-family: var(--ui); font-size: 13px; font-weight: 600; border: none; background: transparent; color: var(--ink); padding: 7px 11px; border-radius: 8px; cursor: pointer; transition: background .12s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+  .btn:hover { background: var(--accent-soft); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.primary { background: var(--accent); color: #fff; }
   .btn.primary:hover { background: #354a61; }
-  .btn.sm { padding: 5px 10px; font-size: 12.5px; }
-  .btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .btn.sm { padding: 5px 9px; font-size: 12.5px; }
+  .btn.danger { background: var(--danger); color: #fff; }
+  .btn.danger:hover { background: #9c3a26; }
 
   .content { padding: 24px; max-width: 1080px; width: 100%; }
 
@@ -141,17 +146,21 @@
   /* ---- forms ---------------------------------------------------------- */
   .field { margin-bottom: 14px; }
   .field label { display: block; font-family: var(--ui); font-size: 12.5px; font-weight: 500; color: var(--ink-soft); margin-bottom: 6px; }
-  .field input, .field select { width: 100%; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; outline: none; }
-  .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  /* seamless underline inputs */
+  .field input, .field select { width: 100%; font-family: inherit; font-size: 14px; color: var(--ink); background: transparent; border: none; border-bottom: 1px solid var(--line); border-radius: 0; padding: 9px 2px; outline: none; transition: border-color .12s; }
+  .field input:focus, .field select:focus { border-bottom-color: var(--accent); box-shadow: none; }
+  .field input::placeholder { color: var(--faint); }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
   .seg button { font-family: var(--ui); font-size: 13.5px; font-weight: 500; border: 0; background: var(--surface); color: var(--muted); padding: 9px 18px; cursor: pointer; }
   .seg button.on { background: var(--accent); color: #fff; font-weight: 600; }
 
-  /* finish-item form inputs (full field set) */
-  .finp { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; font-family: var(--b); font-weight: 600; font-size: 14px; color: var(--ink); outline: none; background: var(--surface); }
-  .finp:focus { border-color: var(--accent); }
+  /* finish-item form inputs — seamless underline (textarea keeps a hairline box) */
+  .finp { width: 100%; border: none; border-bottom: 1px solid var(--line); border-radius: 0; padding: 9px 2px; font-family: var(--b); font-weight: 600; font-size: 14px; color: var(--ink); outline: none; background: transparent; transition: border-color .12s; }
+  .finp:focus { border-bottom-color: var(--accent); }
   .finp::placeholder { color: var(--faint); font-weight: 500; }
+  textarea.finp { border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; }
+  textarea.finp:focus { border-color: var(--accent); }
 
   .formwrap { max-width: 560px; }
   .total-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 4px; margin-top: 6px; border-top: 1px solid var(--line); }
@@ -213,7 +222,9 @@
   .tot { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
   .tot .l { font-family: var(--ui); font-size: 13px; color: var(--muted); font-weight: 600; }
   .tot .v { font-weight: 800; font-size: 25px; font-variant-numeric: tabular-nums; }
-  .kp { width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface2); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  /* icon button — unoutlined, floating */
+  .kp { width: 42px; height: 42px; border: none; border-radius: 8px; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .12s; }
+  .kp:hover { background: var(--accent-soft); }
   .pri { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 9px; padding: 15px; font-family: var(--ui); font-weight: 600; font-size: 16px; cursor: pointer; }
   .sec-act { display: block; width: 100%; text-align: center; background: none; border: none; color: var(--muted); font-family: var(--ui); font-weight: 600; font-size: 13.5px; padding: 11px 0 2px; cursor: pointer; }
 
