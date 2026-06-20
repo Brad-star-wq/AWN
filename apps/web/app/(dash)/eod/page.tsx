@@ -14,22 +14,17 @@ export default async function EndOfDayPage() {
     <div className="mx-auto w-full max-w-[1080px] px-4 py-7 md:px-12 md:pb-14 md:pt-10">
       <DashHeader eyebrow="Dashboard" title="End of day" sub={dateLong()} />
       <div className="grid4">
-        <div className="stat">
-          <div className="k">Credit given</div>
-          <div className="v num">{formatCentsShort(eod.givenCents)}</div>
-        </div>
-        <div className="stat">
-          <div className="k">Credit used</div>
-          <div className="v num pos">{formatCentsShort(eod.usedCents)}</div>
-        </div>
-        <div className="stat">
-          <div className="k">Sales</div>
-          <div className="v num">{formatCentsShort(eod.salesCents)}</div>
-        </div>
-        <div className="stat">
-          <div className="k">Outstanding credit</div>
-          <div className="v num teal">{formatCentsShort(eod.outstandingLiabilityCents)}</div>
-        </div>
+        <div className="stat"><div className="k">Credit given</div><div className="v num">{formatCentsShort(eod.givenCents)}</div></div>
+        <div className="stat"><div className="k">Credit redeemed</div><div className="v num pos">{formatCentsShort(eod.usedCents)}</div></div>
+        <div className="stat"><div className="k">Cash paid to sellers</div><div className="v num">{formatCentsShort(eod.cashCents)}</div></div>
+        <div className="stat"><div className="k">Items bought</div><div className="v num">{eod.itemsBought}</div></div>
+      </div>
+
+      <div className="moneyblock" style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div><div className="l">Outstanding store-credit liability</div><div className="v num">{formatCentsShort(eod.outstandingLiabilityCents)}</div></div>
+        <p className="hint" style={{ color: '#9aa6b4', maxWidth: 320, margin: 0 }}>
+          Cross-check <b style={{ color: '#fff' }}>{formatCentsShort(eod.cashCents)}</b> cash paid against Square’s drawer report before closing.
+        </p>
       </div>
 
       <div className="card" style={{ marginTop: 18 }}>

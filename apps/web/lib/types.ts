@@ -69,6 +69,8 @@ export interface NegativeBalanceRow {
 export interface EodSnapshot {
   givenCents: number;
   usedCents: number;
+  cashCents: number;
+  itemsBought: number;
   salesCents: number;
   outstandingLiabilityCents: number;
   unmatched: UnmatchedRow[];

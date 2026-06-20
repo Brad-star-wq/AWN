@@ -1,6 +1,7 @@
 import { requireOwner } from '@/lib/server/auth';
 import { SignOut } from '@/components/sign-out';
 import { DashHeader } from '@/components/shell/dash-header';
+import { CategorySync } from '@/components/settings/category-sync';
 
 export default async function SettingsPage() {
   const user = await requireOwner();
@@ -40,12 +41,10 @@ export default async function SettingsPage() {
               <option>Other</option>
             </select>
           </div>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label>Categories</label>
-            <input defaultValue="Shoe, Card, Other" />
-          </div>
         </div>
       </div>
+
+      <CategorySync />
 
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="pad" style={{ borderBottom: '1px solid var(--line)' }}>

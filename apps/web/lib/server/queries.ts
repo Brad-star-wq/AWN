@@ -124,9 +124,19 @@ export async function getEndOfDay(): Promise<EodSnapshot> {
 
   const report = await reconcileDay([], engine.ledgerRepo);
 
+  // Cash paid to sellers + items bought today, from our own draft records
+  // (cash buys stash the amount on a stub's attributes.cashPaidCents).
+  const since = startOfTodayIso();
+  const todayDrafts = (await engine.draftRepo.list()).filter((d) => d.createdAt && d.createdAt >= since);
+  let cashCents = 0;
+  for (const d of todayDrafts) if (typeof d.attributes.cashPaidCents === 'number') cashCents += d.attributes.cashPaidCents;
+  const itemsBought = todayDrafts.length;
+
   return {
     givenCents,
     usedCents,
+    cashCents,
+    itemsBought,
     salesCents: 0,
     outstandingLiabilityCents: report.totals.outstandingLiabilityCents,
     unmatched: report.unmatched.map((u) => ({ orderRef: u.orderRef, amountCents: u.amountCents, reason: u.reason })),

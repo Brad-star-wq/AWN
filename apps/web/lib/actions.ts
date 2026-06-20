@@ -6,6 +6,8 @@ import type { Customer } from '@engine/domain/types';
 import { createIntake } from '@engine/domain/intake';
 import { OverdrawError } from '@engine/domain/ledger';
 import type { DraftEdit } from '@engine/domain/drafts';
+import { squareClientFromEnv } from '@engine/adapters/square/squareClient';
+import { SquareCatalogAdapter } from '@engine/adapters/square/squareCatalog';
 import { engine } from '@/lib/server/engine';
 import { requireOwner } from '@/lib/server/auth';
 import { searchCustomers } from '@/lib/server/queries';
@@ -316,6 +318,30 @@ export async function adjustCredit(input: {
   refreshAll();
   revalidatePath(`/customers/${input.customerId}`);
   return { ok: true, balanceCents };
+}
+
+// ---- Settings → Square category sync ---------------------------------------
+// The only Square write the redesign owns. Goes through the dedicated catalog
+// adapter (NOT the POS MockPosAdapter), version-pinned + 429-retried. Gated on a
+// token; defaults to Sandbox (squareClientFromEnv), never production unless
+// SQUARE_ENV=production. No token → a clear message, no call.
+export async function syncCategoryToSquare(
+  name: string,
+): Promise<ActionResult<{ externalId: string; version: number }>> {
+  await requireOwner();
+  if (!name.trim()) return { ok: false, error: 'Enter a category name.' };
+  let client;
+  try {
+    client = squareClientFromEnv();
+  } catch {
+    return { ok: false, error: 'Square not configured — add a sandbox token with ITEMS_WRITE to sync categories.' };
+  }
+  try {
+    const res = await new SquareCatalogAdapter(client).upsertCategory({ name: name.trim() });
+    return { ok: true, externalId: res.externalId, version: res.version };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Category sync failed.' };
+  }
 }
 
 // ---- Customers -------------------------------------------------------------
