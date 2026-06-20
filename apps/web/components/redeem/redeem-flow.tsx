@@ -64,7 +64,7 @@ export function RedeemFlow({ initial }: { initial: CustomerPick | null }) {
       <div className="balance-card">
         <div className="who">
           {customer.displayName}
-          <span className="chip tracked" style={{ marginLeft: 6 }}>Tracked</span>
+          <span className="badge tracked" style={{ marginLeft: 6 }}>Tracked</span>
           {customer.phone && (
             <div className="sub" style={{ marginTop: 3 }}>{customer.phone}</div>
           )}
@@ -79,7 +79,7 @@ export function RedeemFlow({ initial }: { initial: CustomerPick | null }) {
         ← Pick a different customer
       </button>
 
-      {done && <div className="instruction" style={{ background: 'var(--pos-soft)', borderColor: '#bfe0c9', color: 'var(--pos)' }}>{done}</div>}
+      {done && <div className="instruction">{done}</div>}
       {error && <div className="err">{error}</div>}
 
       {balance <= 0 ? (

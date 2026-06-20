@@ -20,7 +20,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
         <div className="pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 600 }}>
-              {c.displayName} <span className="chip tracked" style={{ marginLeft: 6 }}>Tracked</span>
+              {c.displayName} <span className="badge tracked" style={{ marginLeft: 6 }}>Tracked</span>
             </div>
             <div className="sub" style={{ marginTop: 4 }}>{c.phone ?? 'No phone on file'}</div>
           </div>

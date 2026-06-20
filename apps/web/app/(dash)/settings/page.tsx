@@ -65,7 +65,7 @@ export default async function SettingsPage() {
       <div className="card">
         <div className="pad" style={{ display: 'flex', alignItems: 'center' }}>
           <span className="sect-title">Backups</span>
-          <span className="chip pushed" style={{ marginLeft: 'auto' }}>Postgres</span>
+          <span className="badge pushed" style={{ marginLeft: 'auto' }}>Postgres</span>
         </div>
         <div className="pad" style={{ borderTop: '1px solid var(--line)' }}>
           <div className="sub">

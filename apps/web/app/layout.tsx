@@ -1,30 +1,33 @@
 import type { Metadata } from 'next';
-import { Red_Hat_Display, Urbanist } from 'next/font/google';
+import { Inter, Nunito_Sans } from 'next/font/google';
 import './globals.css';
 
-// Display (headings, money, brand) + body (everything else), per the mockups.
-const display = Red_Hat_Display({
+// Locked redesign type (Coastal Slate): Inter carries UI, headings, labels,
+// buttons; Nunito Sans carries body text and every numeral (tabular). The CSS
+// var names stay `--font-display` / `--font-body` so existing `font-display`
+// utilities keep resolving — only the typeface behind them changed.
+const display = Inter({
   subsets: ['latin'],
-  weight: ['500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-display',
   display: 'swap',
 });
-const body = Urbanist({
+const body = Nunito_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '600', '700', '800'],
   variable: '--font-body',
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'Resale — Dashboard',
-  description: 'Owner dashboard for the resale shop.',
+  title: 'AWN Resale',
+  description: 'Store-credit & buy-outright back office.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
-      <body className="font-body">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -32,7 +32,7 @@ export default async function EndOfDayPage() {
       <div className="card" style={{ marginTop: 18 }}>
         <div className="pad" style={{ borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center' }}>
           <span className="sect-title">Needs attention</span>
-          <span className="chip draft" style={{ marginLeft: 8 }}>{attention}</span>
+          <span className="badge draft" style={{ marginLeft: 8 }}>{attention}</span>
         </div>
         {attention === 0 ? (
           <div className="pad sub">Nothing to clear — the books agree.</div>

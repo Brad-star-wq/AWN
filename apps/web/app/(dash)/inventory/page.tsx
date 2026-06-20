@@ -47,7 +47,7 @@ export default async function InventoryPage() {
                     <span className={`toggle ${d.online ? 'on' : 'off'}`}>{d.online ? 'Online' : 'Store only'}</span>
                   </td>
                   <td>
-                    <span className={`chip ${stock.cls}`}>{stock.label}</span>
+                    <span className={`badge ${stock.cls}`}>{stock.label}</span>
                   </td>
                 </tr>
               );

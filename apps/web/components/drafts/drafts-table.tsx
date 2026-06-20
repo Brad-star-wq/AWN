@@ -126,7 +126,7 @@ export function DraftsTable({ drafts }: { drafts: DraftRow[] }) {
                     </button>
                   </td>
                   <td>
-                    <span className={`chip ${STATUS_CHIP[d.status]}`}>
+                    <span className={`badge ${STATUS_CHIP[d.status]}`}>
                       {d.status[0] + d.status.slice(1).toLowerCase()}
                     </span>
                   </td>
@@ -218,7 +218,7 @@ function DraftEditModal({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
           <span className="thumb">{itemEmoji[draft.itemType]}</span>
           <b>{draft.title}</b>
-          <span className={`chip ${STATUS_CHIP[draft.status]}`} style={{ marginLeft: 'auto' }}>
+          <span className={`badge ${STATUS_CHIP[draft.status]}`} style={{ marginLeft: 'auto' }}>
             {draft.status[0] + draft.status.slice(1).toLowerCase()}
           </span>
         </div>
