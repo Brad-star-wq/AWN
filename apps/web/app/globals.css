@@ -243,9 +243,10 @@
      DASHBOARD VOCABULARY (dashboard mockups) — used by Phase C+ screens.
      ==================================================================== */
   /* flat hairline overview; only the liability cell is the dark money block */
-  .ov { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); margin-bottom: 18px; overflow: hidden; }
-  .ov .cell { padding: 22px 24px; border-right: 1px solid var(--line); }
+  .ov { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); margin-bottom: 18px; overflow: hidden; max-width: 100%; }
+  .ov .cell { padding: 22px 24px; border-right: 1px solid var(--line); min-width: 0; }
   .ov .cell:last-child { border-right: none; }
+  .ov .cell .v { overflow: hidden; text-overflow: ellipsis; }
   .ov .cell .l { font-family: var(--ui); font-size: 12.5px; font-weight: 500; color: var(--muted); }
   .ov .cell .v { font-weight: 800; font-size: 30px; margin-top: 12px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
   .ov .cell .v.credit { color: var(--accent); }

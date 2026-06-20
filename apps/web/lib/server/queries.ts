@@ -61,6 +61,12 @@ function toDraftRow(d: DraftProduct, names: Map<string, string>): DraftRow {
   };
 }
 
+function itemTitle(d: DraftProduct): string {
+  const name = typeof d.attributes.name === 'string' ? d.attributes.name : '';
+  const category = typeof d.attributes.category === 'string' ? d.attributes.category : '';
+  return name || draftTitle(d.itemType, d.attributes) || category || 'Item';
+}
+
 export async function getToday(): Promise<TodaySnapshot> {
   await requireOwner();
   const names = await customerNameMap();
@@ -73,9 +79,20 @@ export async function getToday(): Promise<TodaySnapshot> {
     else usedTodayCents += -e.deltaCents;
   }
 
-  const openDrafts = (await engine.draftRepo.list()).filter((d) => d.status !== 'PUSHED');
-  const report = await reconcileDay([], engine.ledgerRepo);
+  // One draft read, reused for the pending count and to tie each activity row to
+  // the items brought in on its transaction (drafts grouped by txnId = sourceRef).
+  const allDrafts = await engine.draftRepo.list();
+  const openDrafts = allDrafts.filter((d) => d.status !== 'PUSHED');
+  const byTxn = new Map<string, DraftProduct[]>();
+  for (const d of allDrafts) {
+    const k = typeof d.attributes.txnId === 'string' ? d.attributes.txnId : null;
+    if (!k) continue;
+    const arr = byTxn.get(k) ?? [];
+    arr.push(d);
+    byTxn.set(k, arr);
+  }
 
+  const report = await reconcileDay([], engine.ledgerRepo);
   const recentEntries = await engine.ledgerRepo.listEntries({ limit: 8 });
 
   return {
@@ -85,7 +102,12 @@ export async function getToday(): Promise<TodaySnapshot> {
     outstandingLiabilityCents: report.totals.outstandingLiabilityCents,
     draftsToFinish: openDrafts.length,
     needsAttentionCount: report.unmatched.length + report.negativeBalances.length,
-    recent: recentEntries.map((e) => toActivityRow(e, names)),
+    recent: recentEntries.map((e) => {
+      const row = toActivityRow(e, names);
+      const items = e.sourceRef ? byTxn.get(e.sourceRef) : undefined;
+      if (items && items.length) row.addedItems = items.map((d) => ({ title: itemTitle(d), itemType: d.itemType }));
+      return row;
+    }),
   };
 }
 

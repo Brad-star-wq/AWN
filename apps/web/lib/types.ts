@@ -14,6 +14,8 @@ export interface ActivityRow {
   customerName: string;
   note?: string;
   sourceRef?: string;
+  /** Items the customer brought in on this transaction (ISSUE rows). */
+  addedItems?: { title: string; itemType: ItemType }[];
 }
 
 export interface CustomerRow {
