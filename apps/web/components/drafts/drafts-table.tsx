@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { draftPush, draftSetOnline, draftsBulkPush } from '@/lib/actions';
 import { formatCents } from '@/lib/money';
-import { ageDays, itemEmoji } from '@/lib/format';
+import { ageDays, itemEmoji, txnDateLabel } from '@/lib/format';
 import { FinishIntakeForm } from '@/components/drafts/finish-intake-form';
 import type { DraftRow } from '@/lib/types';
 
@@ -31,6 +31,24 @@ export function DraftsTable({ drafts }: { drafts: DraftRow[] }) {
   const rows = drafts.filter((d) =>
     tab === 'toFinish' ? d.status === 'DRAFT' : tab === 'ready' ? d.status === 'READY' : true,
   );
+
+  // Group the queue by the transaction that took the items in (txnId), newest
+  // first — the pending pile reads as "this buy, those items".
+  const groups = useMemo(() => {
+    const m = new Map<string, DraftRow[]>();
+    for (const d of rows) {
+      const k = (typeof d.attributes.txnId === 'string' && d.attributes.txnId) || d.createdAt?.slice(0, 10) || d.id;
+      const arr = m.get(k) ?? [];
+      arr.push(d);
+      m.set(k, arr);
+    }
+    return [...m.entries()]
+      .map(([id, items]) => {
+        const dateIso = items.map((i) => i.createdAt).filter((s): s is string => !!s).sort()[0];
+        return { id, items, dateIso, source: items[0]?.sourceName ?? 'Walk-in' };
+      })
+      .sort((a, b) => (b.dateIso ?? '').localeCompare(a.dateIso ?? ''));
+  }, [rows]);
 
   function run(fn: () => Promise<unknown>) {
     startTransition(async () => {
@@ -85,7 +103,13 @@ export function DraftsTable({ drafts }: { drafts: DraftRow[] }) {
             {rows.length === 0 && (
               <tr><td colSpan={8} className="sub" style={{ padding: 18 }}>Nothing here. Take something in from Intake.</td></tr>
             )}
-            {rows.map((d) => {
+            {groups.map((g) => [
+              <tr key={`h-${g.id}`}>
+                <td colSpan={8} style={{ background: 'var(--canvas)', padding: '8px 18px', fontFamily: 'var(--ui)', fontSize: 12, fontWeight: 600, color: 'var(--ink-soft)' }}>
+                  {g.dateIso ? txnDateLabel(g.dateIso) : 'Earlier'} · {g.source} · {g.items.length} item{g.items.length === 1 ? '' : 's'}
+                </td>
+              </tr>,
+              ...g.items.map((d) => {
               const age = ageDays(d.createdAt);
               return (
                 <tr key={d.id}>
@@ -120,7 +144,8 @@ export function DraftsTable({ drafts }: { drafts: DraftRow[] }) {
                   </td>
                 </tr>
               );
-            })}
+            }),
+            ])}
           </tbody>
         </table>
       </div>
