@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "demo": "node --import tsx src/demo/run.ts",
     "demo:pg": "node --env-file-if-exists=.env --import tsx src/demo/runPg.ts",
-    "db:setup": "node --env-file-if-exists=.env --import tsx src/adapters/pg/setup.ts"
+    "db:setup": "node --env-file-if-exists=.env --import tsx src/adapters/pg/setup.ts",
+    "verify:phase5": "node --env-file-if-exists=.env --env-file-if-exists=apps/web/.env.local --import tsx src/demo/phase5SandboxVerify.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

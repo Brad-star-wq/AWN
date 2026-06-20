@@ -1,16 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySquareWebhookSignature } from '@engine/adapters/square/webhookSignature';
+import { processSquareEvent } from '@engine/adapters/square/dispatch';
+import {
+  PgPendingRedemptionStore,
+  PgWebhookEventStore,
+  PgAlertStore,
+} from '@engine/adapters/square/pgStores';
+import { engine } from '@/lib/server/engine';
 
 /**
  * Square webhook endpoint (Phase 5, Part 5).
  *
  * Pinned to the Node.js runtime: this route uses `node:crypto`
- * (HMAC-SHA256 signature verification) and will reach the `postgres`-backed
- * stores once they land — neither works on the Edge runtime. The pin makes
- * that explicit so the route can never be accidentally bundled for Edge.
+ * (HMAC-SHA256 signature verification) and the `postgres`-backed stores —
+ * neither works on the Edge runtime. The pin makes that explicit so the route
+ * can never be accidentally bundled for Edge.
  *
  * `force-dynamic` because every webhook delivery must be processed live; there
  * is nothing to cache or statically render.
+ *
+ * Flow: fail-closed signature verify → parse → dedupe + reconcile/refund inline
+ * → fast 2xx. Processing is idempotent (DB unique on event_id, ledger unique on
+ * the Square payment/refund id), so it is safe to run inline before acking; a
+ * 5xx only escapes on a real (transient) failure, which Square will retry.
  */
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,22 +53,32 @@ export async function POST(request: NextRequest) {
   }
 
   // Signature verified — parse only now.
-  let event: { event_id?: string; type?: string };
+  let event: Record<string, unknown>;
   try {
     event = JSON.parse(rawBody);
   } catch {
     return new NextResponse('Malformed JSON', { status: 400 });
   }
 
-  // Fast-ack, then process asynchronously (Square expects a quick 2xx and will
-  // retry otherwise). The async work — dedupe by event_id, then
-  // reconcilePayment / reverseRefund against the pg-backed pending + event
-  // stores, fetching the Square payment/tender via the adapter — wires in here
-  // once those pieces land in the sandbox step.
-  // TODO(phase5-sandbox): dispatch to the matcher off the request path.
-  console.log(
-    `[square-webhook] verified event ${event.event_id ?? '(no id)'} type=${event.type ?? '(none)'}`,
-  );
+  // Dispatch to the tested matcher / refund logic against the pg-backed stores,
+  // sharing the engine's pooler connection. Idempotent, so running inline is
+  // safe; a thrown error becomes a 5xx and Square retries.
+  try {
+    const result = await processSquareEvent(event, {
+      pendings: new PgPendingRedemptionStore(engine.sql),
+      events: new PgWebhookEventStore(engine.sql),
+      alerts: new PgAlertStore(engine.sql),
+      ledger: engine.ledger,
+    });
+    const summary =
+      result.kind === 'IGNORED'
+        ? `IGNORED(${result.reason})`
+        : `${result.kind}:${result.outcome.kind}`;
+    console.log(`[square-webhook] ${event.type ?? '(no type)'} ${event.event_id ?? ''} → ${summary}`);
+  } catch (err) {
+    console.error('[square-webhook] processing failed', err);
+    return new NextResponse('Processing error', { status: 500 });
+  }
 
   return NextResponse.json({ received: true }, { status: 200 });
 }

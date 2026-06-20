@@ -130,3 +130,24 @@ create table square_webhook_events (
   event_type    text,                                    -- payment.updated, refund.created, ...
   processed_at  timestamptz not null default now()
 );
+
+-- The loud, recoverable surface for cases the matcher refuses to auto-resolve
+-- (no pending, ambiguous, stale, refund-with-no-redemption). Persisted so they
+-- are checkable and a dashboard can list/resolve them.
+create type reconciliation_alert_kind as enum
+  ('NO_PENDING', 'AMBIGUOUS', 'STALE_PENDING', 'REFUND_NO_REDEMPTION');
+
+create table reconciliation_alerts (
+  id            uuid primary key default gen_random_uuid(),
+  kind          reconciliation_alert_kind not null,
+  payment_id    text,
+  refund_id     text,
+  amount_cents  bigint,
+  location_id   text,
+  pending_id    uuid,
+  detail        jsonb,
+  resolved_at   timestamptz,
+  created_at    timestamptz not null default now()
+);
+create index reconciliation_alerts_open_idx
+  on reconciliation_alerts (created_at) where resolved_at is null;
