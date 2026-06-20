@@ -4,6 +4,8 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { adjustCredit } from '@/lib/actions';
 import { parseDollarsToCents } from '@/lib/money';
+import { FocusFlow } from '@/components/forms/focus-flow';
+import { SegGroup } from '@/components/forms/button-group';
 
 export function IssueAdjustCredit({
   customerId,
@@ -53,34 +55,32 @@ export function IssueAdjustCredit({
           onClick={() => setOpen(false)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(20,30,42,.35)', display: 'grid', placeItems: 'center', zIndex: 50 }}
         >
-          <div className="card" style={{ width: 380, padding: 20 }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 14 }}>Issue / adjust credit</h2>
-            {err && <div className="err">{err}</div>}
-            <div className="seg" style={{ marginBottom: 14 }}>
-              <button className={mode === 'issue' ? 'on' : undefined} onClick={() => setMode('issue')}>
-                Issue (+)
-              </button>
-              <button className={mode === 'deduct' ? 'on' : undefined} onClick={() => setMode('deduct')}>
-                Deduct (−)
-              </button>
+          <FocusFlow order={['mode', 'amount', 'note', 'submit']} className="card">
+            <div style={{ width: 380, maxWidth: '90vw', padding: 20 }} onClick={(e) => e.stopPropagation()}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 14 }}>Issue / adjust credit</h2>
+              {err && <div className="err">{err}</div>}
+              <div style={{ marginBottom: 14 }}>
+                <SegGroup stopId="mode" ariaLabel="Adjustment type" value={mode} onSelect={setMode}
+                  options={[{ label: 'Issue (+)', value: 'issue' }, { label: 'Deduct (−)', value: 'deduct' }]} />
+              </div>
+              <div className="field">
+                <label>Amount</label>
+                <input data-stop="amount" enterKeyHint="next" value={amount} placeholder="$0.00" inputMode="decimal" onChange={(e) => setAmount(e.target.value)} />
+              </div>
+              <div className="field">
+                <label>Note (optional)</label>
+                <input data-stop="note" enterKeyHint="done" value={note} placeholder="Reason for the adjustment" onChange={(e) => setNote(e.target.value)} />
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                <button type="button" data-stop="submit" data-primary="true" className="btn primary" disabled={pending} onClick={save}>
+                  {pending ? 'Saving…' : 'Apply'}
+                </button>
+                <button type="button" className="btn" style={{ marginLeft: 'auto' }} onClick={() => setOpen(false)}>
+                  Cancel
+                </button>
+              </div>
             </div>
-            <div className="field">
-              <label>Amount</label>
-              <input value={amount} placeholder="$0.00" inputMode="decimal" onChange={(e) => setAmount(e.target.value)} />
-            </div>
-            <div className="field">
-              <label>Note (optional)</label>
-              <input value={note} placeholder="Reason for the adjustment" onChange={(e) => setNote(e.target.value)} />
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-              <button className="btn primary" disabled={pending} onClick={save}>
-                {pending ? 'Saving…' : 'Apply'}
-              </button>
-              <button className="btn" style={{ marginLeft: 'auto' }} onClick={() => setOpen(false)}>
-                Cancel
-              </button>
-            </div>
-          </div>
+          </FocusFlow>
         </div>
       )}
     </>

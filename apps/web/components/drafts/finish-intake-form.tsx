@@ -17,7 +17,7 @@ const str = (v: unknown) => (typeof v === 'string' ? v : '');
 
 // Logical Enter-advance order (not DOM order). Unrendered stops are skipped, so
 // the same array serves both intake (customer…payout present) and finish.
-const ORDER = ['customer', 'phone', 'cost', 'payout', 'category', 'brand', 'name', 'size-gender', 'size', 'condition', 'list', 'online', 'submit'];
+const ORDER = ['customer', 'phone', 'cost', 'payout', 'category', 'brand', 'name', 'size-gender', 'size', 'condition', 'list', 'color', 'colorway', 'stylecode', 'desc', 'online', 'submit'];
 
 export function FinishIntakeForm({ draft, asPage = false, onClose }: { draft?: DraftRow; asPage?: boolean; onClose?: () => void }) {
   const router = useRouter();
@@ -170,8 +170,8 @@ export function FinishIntakeForm({ draft, asPage = false, onClose }: { draft?: D
 
           {opts.colors && opts.colors.length > 0 && <Field label="Color"><ChipGroup stopId="color" ariaLabel="Color" multi options={opts.colors} values={colors} onSelect={(v) => setColors((c) => (c.includes(v) ? c.filter((x) => x !== v) : [...c, v]))} allowMore /></Field>}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Colorway"><input className="finp" value={colorway} placeholder="e.g. Bred" onChange={(e) => setColorway(e.target.value)} /></Field>
-            <Field label="Style code"><input className="finp" value={styleCode} placeholder="e.g. 555088-062" onChange={(e) => setStyleCode(e.target.value)} /></Field>
+            <Field label="Colorway"><input data-stop="colorway" enterKeyHint="next" className="finp" value={colorway} placeholder="e.g. Bred" onChange={(e) => setColorway(e.target.value)} /></Field>
+            <Field label="Style code"><input data-stop="stylecode" enterKeyHint="next" className="finp" value={styleCode} placeholder="e.g. 555088-062" onChange={(e) => setStyleCode(e.target.value)} /></Field>
           </div>
           <Field label="Description"><textarea data-stop="desc" className="finp min-h-[66px] resize-y" value={description} placeholder="Flaws, box, extras… (Enter = newline)" onChange={(e) => setDescription(e.target.value)} /></Field>
         </div>
