@@ -1,5 +1,15 @@
 import { Cents, Customer, LedgerEntry, NewLedgerEntry } from '../domain/types';
 
+/** Read filter for `listEntries`. All fields optional and AND-combined. */
+export interface LedgerEntryFilter {
+  /** Only this customer's entries. */
+  customerId?: string;
+  /** Only entries with `createdAt >= sinceIso`. */
+  sinceIso?: string;
+  /** Cap the number of rows returned. */
+  limit?: number;
+}
+
 /**
  * Storage contract for the credit ledger.
  *
@@ -41,4 +51,11 @@ export interface LedgerRepository {
 
   /** Whether an entry with this idempotency key already exists. */
   hasIdempotencyKey(key: string): Promise<boolean>;
+
+  /**
+   * Ledger entries, newest first — for the dashboard's credit history and
+   * recent-activity reads. Optionally scoped to a customer, a time window, and
+   * a row cap. Pure read; the balance is still always `SUM(delta_cents)`.
+   */
+  listEntries(filter?: LedgerEntryFilter): Promise<LedgerEntry[]>;
 }

@@ -6,6 +6,8 @@ dist/
 .env.*
 !.env.example
 .next/
+apps/web/.next/
+*.tsbuildinfo
 node_modules/
 .env
 .env.*

@@ -125,6 +125,7 @@ test('pushProduct stores the draft in the mock catalog and returns an external i
     priceCents: 6500,
     status: 'READY',
     online: false,
+    createdAt: new Date().toISOString(),
   };
 
   const { externalId } = await adapter.pushProduct(draft);

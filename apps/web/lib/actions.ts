@@ -1,0 +1,237 @@
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import type { Customer } from '@engine/domain/types';
+import { createIntake } from '@engine/domain/intake';
+import { OverdrawError } from '@engine/domain/ledger';
+import type { DraftEdit } from '@engine/domain/drafts';
+import { engine } from '@/lib/server/engine';
+import { requireOwner } from '@/lib/server/auth';
+import { searchCustomers } from '@/lib/server/queries';
+import type { CustomerPick, ItemType } from '@/lib/types';
+
+/** Client-callable wrapper for the customer typeahead (intake / redeem). */
+export async function searchCustomersAction(query: string): Promise<CustomerPick[]> {
+  return searchCustomers(query);
+}
+
+export type ActionResult<T = unknown> = ({ ok: true } & T) | { ok: false; error: string };
+
+function refreshAll() {
+  revalidatePath('/');
+  revalidatePath('/customers');
+  revalidatePath('/drafts');
+  revalidatePath('/inventory');
+  revalidatePath('/eod');
+  revalidatePath('/redeem');
+}
+
+// ---- Intake ----------------------------------------------------------------
+
+export interface IntakeItemInput {
+  itemType: ItemType;
+  attributes: Record<string, unknown>;
+  /** What the shop pays for this item — sums into the credit issued. Integer cents. */
+  payoutCents: number;
+}
+
+export interface IntakeInput {
+  customerId?: string;
+  displayName?: string;
+  phone?: string;
+  payout: 'store_credit' | 'cash';
+  items: IntakeItemInput[];
+}
+
+async function resolveCashCustomer(input: IntakeInput): Promise<Customer> {
+  const phone = input.phone?.trim();
+  if (phone) {
+    const existing = await engine.customers.findByPhone(phone);
+    if (existing) return existing;
+  }
+  return engine.customers.create({ displayName: input.displayName!.trim(), ...(phone ? { phone } : {}) });
+}
+
+export async function intakeCreate(input: IntakeInput): Promise<ActionResult<{ customerId: string }>> {
+  await requireOwner();
+
+  if (input.items.length === 0) return { ok: false, error: 'Add at least one item.' };
+  let totalCents = 0;
+  for (const it of input.items) {
+    if (!Number.isInteger(it.payoutCents) || it.payoutCents <= 0) {
+      return { ok: false, error: 'Each item needs a price in whole cents.' };
+    }
+    totalCents += it.payoutCents;
+  }
+  if (!input.customerId && !input.displayName?.trim()) {
+    return { ok: false, error: 'Pick an existing customer or enter a name.' };
+  }
+
+  if (input.payout === 'store_credit') {
+    const phone = input.phone?.trim();
+    const res = await createIntake(
+      {
+        customer: input.customerId
+          ? { id: input.customerId }
+          : { displayName: input.displayName!.trim(), ...(phone ? { phone } : {}) },
+        creditCents: totalCents,
+        items: input.items.map((it) => ({ itemType: it.itemType, attributes: it.attributes })),
+        note: 'Intake — store credit',
+      },
+      { ledger: engine.ledger, customers: engine.customers, drafts: engine.draftRepo },
+    );
+    refreshAll();
+    return { ok: true, customerId: res.customer.id };
+  }
+
+  // Cash payout: record the customer + draft stubs, but post no store credit.
+  const customer = input.customerId
+    ? await engine.customers.getCustomer(input.customerId)
+    : await resolveCashCustomer(input);
+  if (!customer) return { ok: false, error: 'Customer not found.' };
+  for (const it of input.items) {
+    await engine.draftRepo.create({ sourceCustomerId: customer.id, itemType: it.itemType, attributes: it.attributes });
+  }
+  refreshAll();
+  return { ok: true, customerId: customer.id };
+}
+
+// ---- Credit ----------------------------------------------------------------
+
+export async function redeemCredit(input: {
+  customerId: string;
+  amountCents: number;
+}): Promise<ActionResult<{ balanceCents: number }>> {
+  await requireOwner();
+  if (!input.customerId) return { ok: false, error: 'Pick a customer.' };
+  if (!Number.isInteger(input.amountCents) || input.amountCents <= 0) {
+    return { ok: false, error: 'Enter an amount greater than zero.' };
+  }
+
+  try {
+    // App-first: cap at the balance and reject an overdraw.
+    await engine.ledger.redeemCredit({
+      customerId: input.customerId,
+      amountCents: input.amountCents,
+      enforceBalance: true,
+      sourceRef: 'dashboard-redeem',
+      note: 'Redeemed via dashboard (app-first)',
+    });
+  } catch (err) {
+    if (err instanceof OverdrawError) return { ok: false, error: 'That is more than the available balance.' };
+    throw err;
+  }
+
+  const balanceCents = await engine.ledger.getBalance(input.customerId);
+  refreshAll();
+  revalidatePath(`/customers/${input.customerId}`);
+  return { ok: true, balanceCents };
+}
+
+export async function adjustCredit(input: {
+  customerId: string;
+  amountCents: number;
+  note?: string;
+}): Promise<ActionResult<{ balanceCents: number }>> {
+  await requireOwner();
+  if (!input.customerId) return { ok: false, error: 'Pick a customer.' };
+  if (!Number.isInteger(input.amountCents) || input.amountCents === 0) {
+    return { ok: false, error: 'Enter a non-zero amount (negative to deduct).' };
+  }
+
+  await engine.ledger.adjustCredit({
+    customerId: input.customerId,
+    amountCents: input.amountCents,
+    ...(input.note ? { note: input.note } : {}),
+  });
+  const balanceCents = await engine.ledger.getBalance(input.customerId);
+  refreshAll();
+  revalidatePath(`/customers/${input.customerId}`);
+  return { ok: true, balanceCents };
+}
+
+// ---- Customers -------------------------------------------------------------
+
+export async function customerCreate(input: {
+  displayName: string;
+  phone?: string;
+}): Promise<ActionResult<{ customerId: string }>> {
+  await requireOwner();
+  if (!input.displayName.trim()) return { ok: false, error: 'Enter a name.' };
+  const phone = input.phone?.trim();
+  const c = await engine.customers.create({ displayName: input.displayName.trim(), ...(phone ? { phone } : {}) });
+  refreshAll();
+  return { ok: true, customerId: c.id };
+}
+
+// ---- Drafts ----------------------------------------------------------------
+
+export async function draftEdit(input: {
+  id: string;
+  itemType?: ItemType;
+  attributes?: Record<string, unknown>;
+  priceCents?: number;
+}): Promise<ActionResult> {
+  await requireOwner();
+  if (input.priceCents !== undefined && (!Number.isInteger(input.priceCents) || input.priceCents < 0)) {
+    return { ok: false, error: 'Price must be a whole number of cents.' };
+  }
+  const edit: DraftEdit = {};
+  if (input.itemType) edit.itemType = input.itemType;
+  if (input.attributes) edit.attributes = input.attributes;
+  if (input.priceCents !== undefined) edit.priceCents = input.priceCents;
+  try {
+    await engine.drafts.edit(input.id, edit);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Could not edit draft.' };
+  }
+  refreshAll();
+  return { ok: true };
+}
+
+export async function draftMarkReady(id: string): Promise<ActionResult> {
+  await requireOwner();
+  try {
+    await engine.drafts.markReady(id);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Could not mark ready.' };
+  }
+  refreshAll();
+  return { ok: true };
+}
+
+export async function draftSetOnline(id: string, online: boolean): Promise<ActionResult> {
+  await requireOwner();
+  await engine.drafts.setOnline(id, online);
+  refreshAll();
+  return { ok: true };
+}
+
+/** Push one draft to the catalog via the MOCK adapter (Square is Phase 5). */
+export async function draftPush(id: string): Promise<ActionResult> {
+  await requireOwner();
+  try {
+    const draft = await engine.draftRepo.get(id);
+    if (!draft) return { ok: false, error: 'Draft not found.' };
+    if (draft.status === 'DRAFT') await engine.drafts.markReady(id);
+    await engine.drafts.pushToPos(id, engine.pos);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Could not push draft.' };
+  }
+  refreshAll();
+  return { ok: true };
+}
+
+export async function draftsBulkPush(ids: string[]): Promise<ActionResult<{ pushed: number }>> {
+  await requireOwner();
+  let pushed = 0;
+  for (const id of ids) {
+    const draft = await engine.draftRepo.get(id);
+    if (!draft || draft.status === 'PUSHED') continue;
+    if (draft.status === 'DRAFT') await engine.drafts.markReady(id);
+    await engine.drafts.pushToPos(id, engine.pos);
+    pushed += 1;
+  }
+  refreshAll();
+  return { ok: true, pushed };
+}

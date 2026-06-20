@@ -98,6 +98,21 @@ test('a sale with no customer or an unknown customer is surfaced, not dropped', 
   if (r2.status === 'UNMATCHED') assert.equal(r2.reason, 'customer-not-found');
 });
 
+test('adjustCredit posts a signed ADJUST row; rejects zero/non-integer', async () => {
+  const { ledger } = setup();
+  await ledger.issueCredit({ customerId: 'cust_marcus', amountCents: 5000 });
+
+  const up = await ledger.adjustCredit({ customerId: 'cust_marcus', amountCents: 500, note: 'goodwill' });
+  assert.equal(up.kind, 'ADJUST');
+  assert.equal(await ledger.getBalance('cust_marcus'), 5500);
+
+  await ledger.adjustCredit({ customerId: 'cust_marcus', amountCents: -1500, note: 'correction' });
+  assert.equal(await ledger.getBalance('cust_marcus'), 4000);
+
+  await assert.rejects(ledger.adjustCredit({ customerId: 'cust_marcus', amountCents: 0 }), /non-zero/);
+  await assert.rejects(ledger.adjustCredit({ customerId: 'cust_marcus', amountCents: 10.5 }), /integer/);
+});
+
 test('a sale with no store-credit tender is ignored', async () => {
   const { ledger } = setup();
   const cardOnly: SaleEvent = {

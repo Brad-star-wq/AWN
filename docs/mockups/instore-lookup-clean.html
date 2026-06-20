@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>In-store — lookup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f4f7f9;--surface:#fff;--ink:#2c353f;--ink-soft:#566472;--muted:#8a96a4;--faint:#b3bdc8;--line:#e4e9ed;--accent:#3f566f;--accent-soft:#eaeef2;--ui:'Inter',sans-serif;--b:'Nunito Sans',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--b);background:#d9dde1;-webkit-font-smoothing:antialiased;padding:32px;display:flex;justify-content:center}.t{font-variant-numeric:tabular-nums}
+.phone{width:380px;height:780px;background:var(--canvas);border:1px solid rgba(0,0,0,.08);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;color:var(--ink)}
+.bar{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
+.mode{display:flex;align-items:center;gap:9px;font-family:var(--ui);font-weight:600;font-size:16px}.mode .dot{width:7px;height:7px;border-radius:50%;background:#5e9a86}
+.link{font-family:var(--ui);font-size:13px;font-weight:600;color:var(--muted)}
+.bd{flex:1;overflow:auto;padding:18px}
+.search{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:13px 14px;margin-bottom:22px}.search svg{width:18px;height:18px;stroke:var(--muted);stroke-width:2;fill:none}.search span{color:var(--muted);font-weight:500;font-size:15px}
+.lbl{font-family:var(--ui);font-size:11px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:0 2px 10px}
+.cust{display:flex;align-items:center;gap:13px;padding:12px 10px;border-radius:9px}.cust:active{background:var(--surface)}
+.ini{width:42px;height:42px;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-family:var(--ui);font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;flex:none}
+.cust .nm{flex:1}.cust .nm b{font-family:var(--ui);font-weight:600;font-size:15.5px;display:block}.cust .nm s{text-decoration:none;font-size:12.5px;color:var(--muted)}
+.bal{text-align:right}.bal .v{font-weight:800;font-size:16px;color:var(--accent)}.bal .l{font-size:11px;color:var(--faint);font-weight:600}
+.new{display:flex;align-items:center;gap:13px;padding:12px 10px;border-radius:9px;color:var(--ink-soft);font-family:var(--ui);font-weight:600;font-size:15px;margin-top:8px}
+.new .pl{width:42px;height:42px;border-radius:10px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;flex:none}.new svg{width:18px;height:18px;stroke:var(--muted);stroke-width:2.2;fill:none}
+</style></head><body>
+<div class="phone">
+  <div class="bar"><div class="mode"><span class="dot"></span>In-store</div><div class="link">Dashboard ›</div></div>
+  <div class="bd">
+    <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>Search name or phone…</span></div>
+    <div class="lbl">Recent</div>
+    <div class="cust"><span class="ini">MB</span><div class="nm"><b>Marcus Bell</b><s>Last seen 2:48 PM</s></div><div class="bal"><div class="v t">$120</div><div class="l">credit</div></div></div>
+    <div class="cust"><span class="ini">TP</span><div class="nm"><b>Tasha Pham</b><s>Last seen today</s></div><div class="bal"><div class="v t">$50</div><div class="l">credit</div></div></div>
+    <div class="cust"><span class="ini">DC</span><div class="nm"><b>Devon Carter</b><s>Last seen 1:22 PM</s></div><div class="bal"><div class="v t">$0</div><div class="l">credit</div></div></div>
+    <div class="cust"><span class="ini">RB</span><div class="nm"><b>Ryder Bradley</b><s>Last seen yesterday</s></div><div class="bal"><div class="v t">$240</div><div class="l">credit</div></div></div>
+    <div class="new"><span class="pl"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>New customer</div>
+  </div>
+</div>
+</body></html>

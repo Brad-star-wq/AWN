@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finish item</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f4f7f9;--surface:#fff;--ink:#2c353f;--ink-soft:#566472;--muted:#8a96a4;--faint:#b3bdc8;--line:#e4e9ed;--accent:#3f566f;--accent-soft:#eaeef2;--ui:'Inter',sans-serif;--b:'Nunito Sans',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--b);background:var(--canvas);color:var(--ink);-webkit-font-smoothing:antialiased}.t{font-variant-numeric:tabular-nums}
+.app{display:flex;min-height:100vh}
+.sb{width:212px;flex:none;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 14px}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px}.lg{width:32px;height:32px;border-radius:7px;background:var(--ink);color:#fff;font-family:var(--ui);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}.brand .bn{font-family:var(--ui);font-weight:600;font-size:14px}
+.nav{display:flex;flex-direction:column;gap:2px}.ni{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:7px;color:var(--ink-soft);font-family:var(--ui);font-weight:500;font-size:13.5px}.ni svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.8;fill:none}.ni.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
+.main{flex:1;min-width:0;overflow:auto}
+.top{display:flex;align-items:center;gap:14px;padding:16px 30px;border-bottom:1px solid var(--line);background:var(--surface)}
+.back{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer}.back svg{width:18px;height:18px;stroke:var(--ink-soft);stroke-width:2;fill:none}
+.top .tt{font-family:var(--ui);font-weight:600;font-size:15px}.top .ctx{font-size:12.5px;color:var(--muted);font-weight:500}
+.grid{display:grid;grid-template-columns:1fr 304px;gap:30px;padding:30px;max-width:1080px}
+.field{margin-bottom:22px}
+.fl{font-family:var(--ui);font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:9px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:8px 14px;font-family:var(--ui);font-weight:500;font-size:13.5px;color:var(--ink-soft);cursor:pointer}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}.chip.more{border-style:dashed;color:var(--muted)}
+.seg{display:inline-flex;background:#eef1f4;border-radius:7px;padding:3px;margin-bottom:10px}.seg button{border:none;background:none;padding:6px 16px;border-radius:5px;font-family:var(--ui);font-weight:600;font-size:12.5px;color:var(--muted);cursor:pointer}.seg button.on{background:#fff;color:var(--ink)}
+.inp{width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-family:var(--b);font-weight:600;font-size:14px;color:var(--ink);outline:none}.inp:focus{border-color:var(--accent)}.inp::placeholder{color:var(--faint)}
+textarea.inp{resize:vertical;min-height:66px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.price{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:0 13px;max-width:170px}.price:focus-within{border-color:var(--accent)}.price .c{color:var(--faint);font-weight:800}.price input{border:none;outline:none;padding:11px 0;font-weight:800;font-size:17px;width:100%;color:var(--ink)}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}.qty button{width:40px;height:42px;border:none;background:#fff;font-size:18px;color:var(--ink-soft);cursor:pointer}.qty .n{width:46px;text-align:center;font-weight:800;font-size:16px}
+.div{height:1px;background:var(--line);margin:4px 0 22px}
+.rail{position:sticky;top:30px;align-self:start;display:flex;flex-direction:column;gap:14px}
+.drop{background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:22px;text-align:center;cursor:pointer}.drop svg{width:24px;height:24px;stroke:var(--faint);stroke-width:1.8;fill:none}.drop .t{font-family:var(--ui);font-weight:600;font-size:13px;margin-top:9px}.drop .s{font-size:12px;color:var(--muted);margin-top:3px}
+.margin{background:var(--ink);border-radius:10px;padding:16px 18px;color:#fff}.mrow{display:flex;align-items:center;justify-content:space-between;padding:6px 0}.ml{font-family:var(--ui);font-size:12.5px;color:#9aa6b4;font-weight:500}.mv{font-weight:800;font-size:16px}.mln{height:1px;background:#37465a;margin:4px 0}.pct .mv{color:#7fb8a3}
+.tog{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:13px 15px}.tog .tl{font-family:var(--ui);font-weight:600;font-size:13.5px}.tog .ts{font-size:11.5px;color:var(--muted);margin-top:2px}
+.sw{width:42px;height:24px;border-radius:999px;background:var(--accent);position:relative;cursor:pointer;flex:none}.sw::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;right:3px}
+.push{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:14px;font-family:var(--ui);font-weight:600;font-size:14.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}.push svg{width:16px;height:16px;stroke:#fff;stroke-width:2.2;fill:none}
+.save{background:var(--surface);color:var(--ink-soft);border:1px solid var(--line);border-radius:9px;padding:12px;font-family:var(--ui);font-weight:600;font-size:13.5px;cursor:pointer}
+</style></head><body>
+<div class="app">
+  <aside class="sb">
+    <div class="brand"><div class="lg">AW</div><div class="bn">A Win Nguyen</div></div>
+    <nav class="nav">
+      <div class="ni"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Today</div>
+      <div class="ni on"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Drafts</div>
+      <div class="ni"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5.5"/></svg>People</div>
+      <div class="ni"><svg viewBox="0 0 24 24"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.6 6.6 0 0 0 21 12.8Z"/></svg>End of day</div>
+      <div class="ni"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.8 7.8 0 0 0 0-2l2-1.5-2-3.5-2.4 1a7.8 7.8 0 0 0-1.7-1L15 3h-4l-.3 2.9a7.8 7.8 0 0 0-1.7 1l-2.4-1-2 3.5L6.6 11a7.8 7.8 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a7.8 7.8 0 0 0 1.7 1L13 21h4l.3-2.9a7.8 7.8 0 0 0 1.7-1l2.4 1 2-3.5z"/></svg>Settings</div>
+    </nav>
+  </aside>
+  <div class="main">
+    <div class="top"><div class="back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></div><div class="tt">Finish item</div><div class="ctx">Sneaker · $200 cost · Marcus Bell · Jun 19</div></div>
+    <div class="grid">
+      <div>
+        <div class="field"><div class="fl">Category</div><div class="chips"><div class="chip on">Sneakers</div><div class="chip">Cards</div><div class="chip">Clothing</div><div class="chip">Accessories</div><div class="chip">Other</div></div></div>
+        <div class="field"><div class="fl">Brand</div><div class="chips"><div class="chip on">Nike</div><div class="chip">Jordan</div><div class="chip">New Balance</div><div class="chip">Adidas</div><div class="chip">Yeezy</div><div class="chip more">More…</div></div></div>
+        <div class="field"><div class="fl">Name</div><input class="inp" value="Air Jordan 1 Retro High OG"></div>
+        <div class="field"><div class="fl">Size</div><div class="seg"><button class="on">Men's</button><button>Women's</button></div><div class="chips"><div class="chip">8</div><div class="chip">8.5</div><div class="chip">9</div><div class="chip on">9.5</div><div class="chip">10</div><div class="chip">10.5</div><div class="chip">11</div><div class="chip more">Custom</div></div></div>
+        <div class="field"><div class="fl">Condition</div><div class="chips"><div class="chip on">DS</div><div class="chip">VNDS</div><div class="chip">Used</div><div class="chip">Beater</div><div class="chip more">Other</div></div></div>
+        <div class="div"></div>
+        <div class="two">
+          <div class="field"><div class="fl">List price</div><div class="price"><span class="c">$</span><input class="t" value="320"></div></div>
+          <div class="field"><div class="fl">Quantity</div><div class="qty"><button>−</button><span class="n t">1</span><button>+</button></div></div>
+        </div>
+        <div class="field"><div class="fl">Color</div><div class="chips"><div class="chip on">Black</div><div class="chip on">Red</div><div class="chip">White</div><div class="chip">Grey</div><div class="chip more">More…</div></div></div>
+        <div class="two">
+          <div class="field"><div class="fl">Colorway</div><input class="inp" placeholder="e.g. Bred"></div>
+          <div class="field"><div class="fl">Style code</div><input class="inp" placeholder="e.g. 555088-062"></div>
+        </div>
+        <div class="field"><div class="fl">Description</div><textarea class="inp" placeholder="Flaws, box, extras…"></textarea></div>
+      </div>
+      <div class="rail">
+        <div class="drop"><svg viewBox="0 0 24 24"><path d="M21 15v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3"/><path d="m7 9 5-5 5 5"/><path d="M12 4v12"/></svg><div class="t">Add photos</div><div class="s">Drag in or click to upload</div></div>
+        <div class="margin"><div class="mrow"><span class="ml">Cost</span><span class="mv t">$200</span></div><div class="mln"></div><div class="mrow"><span class="ml">List price</span><span class="mv t">$320</span></div><div class="mln"></div><div class="mrow pct"><span class="ml">Margin</span><span class="mv t">+37.5%</span></div></div>
+        <div class="tog"><div><div class="tl">List online</div><div class="ts">Show on the web store</div></div><div class="sw"></div></div>
+        <button class="push">Push to Square <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M4 21h16"/></svg></button>
+        <button class="save">Save &amp; next</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

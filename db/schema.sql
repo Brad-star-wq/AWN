@@ -89,3 +89,44 @@ create table sale_events (
   received_at         timestamptz not null default now(),
   applied_at          timestamptz
 );
+
+-- ---- Square reconciliation (Phase 5, app-owned) ------------
+-- The app owns *who* and *how much*; the Square webhook only confirms a sale
+-- *happened*. These two tables live outside the POS-agnostic engine on
+-- purpose: location and the time-window match are Square-shaped concerns.
+
+-- A redeem intent, written when the owner starts a redeem in the app, BEFORE
+-- any ledger entry is finalized. The webhook matcher confirms it against a
+-- Square OTHER-tender payment (amount + location + time) and only then posts
+-- the negative ledger entry (idempotent on the Square payment id).
+create type pending_redemption_status as enum ('PENDING', 'RECONCILED', 'EXPIRED');
+
+create table pending_redemptions (
+  id                    uuid primary key default gen_random_uuid(),
+  customer_id           uuid not null references customers(id),  -- the app owns "who"
+  amount_cents          bigint not null check (amount_cents > 0), -- integer cents
+  location_id           text not null,                  -- Square location; part of the match key
+  status                pending_redemption_status not null default 'PENDING',
+  created_at            timestamptz not null default now(),  -- the time-window anchor
+  -- Set on reconcile:
+  reconciled_payment_id text,                            -- the Square payment that confirmed it
+  reconciled_at         timestamptz,
+  ledger_entry_id       uuid references credit_ledger(id)
+);
+-- The matcher only ever scans open intents.
+create index pending_redemptions_open_idx
+  on pending_redemptions (location_id, amount_cents, created_at)
+  where status = 'PENDING';
+-- The refund path looks a redemption up by the Square payment it reconciled to.
+create index pending_redemptions_payment_idx
+  on pending_redemptions (reconciled_payment_id)
+  where reconciled_payment_id is not null;
+
+-- Webhook delivery dedupe. Square retries; each event_id is processed at most
+-- once. This is the optimization layer — the real double-post guard is still
+-- the ledger's unique idempotency_key on the Square payment id.
+create table square_webhook_events (
+  event_id      text primary key,                        -- Square event_id
+  event_type    text,                                    -- payment.updated, refund.created, ...
+  processed_at  timestamptz not null default now()
+);

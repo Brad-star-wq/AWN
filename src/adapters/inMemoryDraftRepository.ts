@@ -15,6 +15,7 @@ export class InMemoryDraftRepository implements DraftRepository {
       ...(input.priceCents !== undefined ? { priceCents: input.priceCents } : {}),
       status: 'DRAFT',
       online: false,
+      createdAt: new Date().toISOString(),
     };
     this.drafts.set(draft.id, draft);
     return draft;

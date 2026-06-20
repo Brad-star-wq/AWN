@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Today</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f4f7f9;--surface:#ffffff;--ink:#2c353f;--ink-soft:#566472;--muted:#8a96a4;--faint:#b3bdc8;--line:#e4e9ed;--accent:#3f566f;--accent-soft:#eaeef2;--ui:'Inter',sans-serif;--b:'Nunito Sans',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--b);background:var(--canvas);color:var(--ink);-webkit-font-smoothing:antialiased}
+.t{font-variant-numeric:tabular-nums}
+.app{display:flex;min-height:100vh}
+/* sidebar — labeled, professional back-office */
+.sb{width:212px;flex:none;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 14px}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px}
+.lg{width:32px;height:32px;border-radius:7px;background:var(--ink);color:#fff;font-family:var(--ui);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.brand .bn{font-family:var(--ui);font-weight:600;font-size:14px;letter-spacing:-.01em}
+.nav{display:flex;flex-direction:column;gap:2px}
+.ni{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:7px;color:var(--ink-soft);font-family:var(--ui);font-weight:500;font-size:13.5px;cursor:pointer}
+.ni svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.8;fill:none}
+.ni:hover{background:var(--canvas)}
+.ni.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
+.sb .foot{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.storemode{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:8px;padding:11px 12px;font-family:var(--ui);font-weight:600;font-size:13px;color:var(--ink);cursor:pointer}
+.storemode svg{width:15px;height:15px;stroke:var(--ink-soft);stroke-width:2;fill:none}
+.status{display:flex;align-items:center;gap:8px;padding:0 4px;font-size:12px;color:var(--muted);font-weight:600}.status .dot{width:7px;height:7px;border-radius:50%;background:#5e9a86}
+/* main */
+.main{flex:1;min-width:0;overflow:auto}
+.wrap{padding:40px 48px 56px;max-width:1080px}
+.head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:40px}
+.eyebrow{font-family:var(--ui);font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.head h1{font-family:var(--ui);font-size:26px;font-weight:600;letter-spacing:-.02em;margin-top:8px}
+.head .date{color:var(--muted);font-size:13.5px;margin-top:6px;font-weight:500}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:7px;padding:8px 13px;font-family:var(--ui);font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:#5e9a86}
+/* overview — flat, hairline, airy (not cards) */
+.ov{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:18px;overflow:hidden}
+.ov .cell{padding:22px 24px;border-right:1px solid var(--line)}.ov .cell:last-child{border-right:none}
+.ov .l{font-family:var(--ui);font-size:12.5px;font-weight:500;color:var(--muted)}
+.ov .v{font-weight:800;font-size:30px;margin-top:12px;letter-spacing:-.01em}
+.ov .v.credit{color:var(--accent)}
+.ov .cell.liab{background:var(--ink)}
+.ov .cell.liab .l{color:#9aa6b4}.ov .cell.liab .v{color:#fff}
+.pending{display:flex;align-items:center;gap:10px;font-family:var(--ui);font-size:13px;font-weight:500;color:var(--ink-soft);padding:4px 2px;margin-bottom:38px;cursor:pointer}
+.pending b{font-weight:700;color:var(--ink)}.pending svg{width:15px;height:15px;stroke:var(--muted);stroke-width:2;fill:none}
+.pending .arr{margin-left:2px}
+.sec{font-family:var(--ui);font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:4px}
+.list{border-top:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:14px;padding:15px 4px;border-bottom:1px solid var(--line)}
+.av{width:34px;height:34px;border-radius:7px;background:var(--accent-soft);color:var(--accent);font-family:var(--ui);font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none}
+.who{flex:1}.who .n{font-family:var(--ui);font-weight:600;font-size:14px}.who .m{font-size:12.5px;color:var(--muted);margin-top:2px;font-weight:500}
+.amt{font-weight:800;font-size:15px}.amt.p{color:var(--accent)}.amt.n{color:var(--ink-soft)}
+.acts{display:flex;gap:10px}
+.btn-intake{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:11px 18px;font-family:var(--ui);font-weight:600;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.btn-intake svg{width:16px;height:16px;stroke:#fff;stroke-width:2.2;fill:none}
+.btn-redeem{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:11px 18px;font-family:var(--ui);font-weight:600;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.btn-redeem svg{width:16px;height:16px;stroke:var(--ink-soft);stroke-width:2.2;fill:none}
+</style></head><body>
+<div class="app">
+  <aside class="sb">
+    <div class="brand"><div class="lg">AW</div><div class="bn">A Win Nguyen</div></div>
+    <nav class="nav">
+      <div class="ni on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Today</div>
+      <div class="ni"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Drafts</div>
+      <div class="ni"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5.5"/></svg>People</div>
+      <div class="ni"><svg viewBox="0 0 24 24"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.6 6.6 0 0 0 21 12.8Z"/></svg>End of day</div>
+      <div class="ni"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.3 1a7 7 0 0 0-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 0 0-1.7 1l-2.3-1-2 3.5L4.1 11a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.3-1a7 7 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7 7 0 0 0 1.7-1l2.3 1 2-3.5-2-1.5a7 7 0 0 0 .1-1z"/></svg>Settings</div>
+    </nav>
+    <div class="foot">
+      <div class="storemode">Store mode <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></div>
+      <div class="status"><span class="dot"></span>Square connected</div>
+    </div>
+  </aside>
+  <div class="main"><div class="wrap">
+    <div class="head">
+      <div><div class="eyebrow">Dashboard</div><h1>Today</h1><div class="date">Thursday, June 19 · 3:14 PM</div></div>
+      <div class="acts">
+        <button class="btn-redeem"><svg viewBox="0 0 24 24"><path d="M12 21V9"/><path d="m7 13 5-5 5 5"/><path d="M4 3h16"/></svg>Redeem</button>
+        <button class="btn-intake"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>Intake</button>
+      </div>
+    </div>
+
+    <div class="ov">
+      <div class="cell"><div class="l">Credit given today</div><div class="v credit t">$245</div></div>
+      <div class="cell"><div class="l">Credit used today</div><div class="v t">$60</div></div>
+      <div class="cell liab"><div class="l">Outstanding liability</div><div class="v t">$4,210</div></div>
+    </div>
+
+    <div class="pending"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg><span><b>4 items</b> pending — finish in Drafts</span><svg class="arr" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></div>
+
+    <div class="sec">Recent activity</div>
+    <div class="list">
+      <div class="row"><span class="av">TP</span><div class="who"><div class="n">Tasha Pham</div><div class="m">Store credit issued · Just now</div></div><span class="amt p t">+$50</span></div>
+      <div class="row"><span class="av">MB</span><div class="who"><div class="n">Marcus Bell</div><div class="m">Store credit issued · Just now</div></div><span class="amt p t">+$30</span></div>
+      <div class="row"><span class="av">MB</span><div class="who"><div class="n">Marcus Bell</div><div class="m">Redeemed credit · 2:48 PM</div></div><span class="amt n t">−$60</span></div>
+      <div class="row"><span class="av">DC</span><div class="who"><div class="n">Devon Carter</div><div class="m">Store credit issued · 1:22 PM</div></div><span class="amt p t">+$120</span></div>
+    </div>
+  </div></div>
+</div>
+</body></html>

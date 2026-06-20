@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f4f7f9;--surface:#fff;--ink:#2c353f;--ink-soft:#566472;--muted:#8a96a4;--faint:#b3bdc8;--line:#e4e9ed;--accent:#3f566f;--accent-soft:#eaeef2;--ui:'Inter',sans-serif;--b:'Nunito Sans',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--b);background:var(--canvas);color:var(--ink);-webkit-font-smoothing:antialiased}.t{font-variant-numeric:tabular-nums}
+.app{display:flex;min-height:100vh}
+.sb{width:212px;flex:none;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 14px}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px}
+.lg{width:32px;height:32px;border-radius:7px;background:var(--ink);color:#fff;font-family:var(--ui);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.brand .bn{font-family:var(--ui);font-weight:600;font-size:14px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.ni{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:7px;color:var(--ink-soft);font-family:var(--ui);font-weight:500;font-size:13.5px;cursor:pointer}.ni svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.8;fill:none}.ni.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
+.main{flex:1;min-width:0;overflow:auto}
+.top{display:flex;align-items:center;gap:14px;padding:18px 32px;border-bottom:1px solid var(--line);background:var(--surface)}
+.back{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer}.back svg{width:18px;height:18px;stroke:var(--ink-soft);stroke-width:2;fill:none}
+.top .tt{font-family:var(--ui);font-weight:600;font-size:15px}
+.wrap{padding:34px 40px;max-width:920px}
+.profile{display:flex;align-items:center;gap:16px;margin-bottom:26px}
+.av{width:58px;height:58px;border-radius:13px;background:var(--accent-soft);color:var(--accent);font-family:var(--ui);font-weight:700;font-size:20px;display:flex;align-items:center;justify-content:center;flex:none}
+.profile h1{font-family:var(--ui);font-weight:600;font-size:23px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.tag{font-family:var(--ui);font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent);padding:3px 9px;border-radius:6px}
+.profile .meta{color:var(--muted);font-size:13px;margin-top:5px;font-weight:500}
+.menu{margin-left:auto;width:36px;height:36px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer}.menu svg{width:18px;height:18px;stroke:var(--ink-soft);stroke-width:2;fill:none}
+.bal{display:flex;align-items:center;justify-content:space-between;background:var(--ink);border-radius:11px;padding:22px 26px;margin-bottom:34px}
+.bal .l{font-family:var(--ui);font-size:12.5px;color:#9aa6b4;font-weight:500}.bal .v{font-weight:800;font-size:36px;color:#fff;margin-top:7px;letter-spacing:-.01em}
+.bal .a{display:flex;gap:10px}.bal .a button{font-family:var(--ui);font-weight:600;font-size:13.5px;border:none;border-radius:8px;padding:12px 18px;cursor:pointer}
+.b-issue{background:#5a708a;color:#fff}.b-redeem{background:#374656;color:#fff}
+.sec{font-family:var(--ui);font-weight:600;font-size:13px;color:var(--ink-soft);margin-bottom:6px;display:flex;align-items:center;justify-content:between}
+.sec span{color:var(--muted);font-weight:500;margin-left:auto}
+.secwrap{margin-bottom:30px}
+.list{border-top:1px solid var(--line)}
+.r{display:flex;align-items:center;gap:13px;padding:14px 4px;border-bottom:1px solid var(--line)}
+.ic{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex:none}.ic svg{width:16px;height:16px;stroke-width:2;fill:none}
+.ic.up{background:var(--accent-soft)}.ic.up svg{stroke:var(--accent)}.ic.dn{background:#eef1f4}.ic.dn svg{stroke:var(--ink-soft)}
+.r .w{flex:1}.r .n{font-family:var(--ui);font-weight:600;font-size:14px}.r .m{font-size:12.5px;color:var(--muted);margin-top:2px;font-weight:500}
+.r .amt{font-weight:800;font-size:15px}.amt.p{color:var(--accent)}.amt.n{color:var(--ink-soft)}
+/* items grouped by transaction */
+.txn{border:1px solid var(--line);border-radius:10px;margin-bottom:11px;overflow:hidden}
+.txnh{display:flex;align-items:center;gap:10px;padding:13px 16px;background:#fafbfc}
+.txnh .d{font-family:var(--ui);font-weight:600;font-size:13.5px}.txnh .p{margin-left:auto;font-size:12.5px;color:var(--muted);font-weight:600}.txnh .p b{color:var(--accent);font-weight:800}
+.itm{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line)}
+.thumb{width:34px;height:34px;border-radius:7px;background:#eef1f4;display:flex;align-items:center;justify-content:center;flex:none}.thumb svg{width:17px;height:17px;stroke:var(--faint);stroke-width:1.8;fill:none}
+.itm .in{flex:1}.itm .in b{font-family:var(--ui);font-weight:600;font-size:13.5px;display:block}.itm .in s{text-decoration:none;font-size:12px;color:var(--muted)}
+.st{font-family:var(--ui);font-size:11px;font-weight:600;padding:4px 9px;border-radius:5px}
+.st.stock{background:var(--accent-soft);color:var(--accent)}.st.sold{background:#eef1f4;color:var(--muted)}.st.pend{background:#f5edda;color:#9c7a2c}
+</style></head><body>
+<div class="app">
+  <aside class="sb">
+    <div class="brand"><div class="lg">AW</div><div class="bn">A Win Nguyen</div></div>
+    <nav class="nav">
+      <div class="ni"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Today</div>
+      <div class="ni"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Drafts</div>
+      <div class="ni on"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5.5"/></svg>People</div>
+      <div class="ni"><svg viewBox="0 0 24 24"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.6 6.6 0 0 0 21 12.8Z"/></svg>End of day</div>
+      <div class="ni"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.8 7.8 0 0 0 0-2l2-1.5-2-3.5-2.4 1a7.8 7.8 0 0 0-1.7-1L15 3h-4l-.3 2.9a7.8 7.8 0 0 0-1.7 1l-2.4-1-2 3.5L6.6 11a7.8 7.8 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a7.8 7.8 0 0 0 1.7 1L13 21h4l.3-2.9a7.8 7.8 0 0 0 1.7-1l2.4 1 2-3.5z"/></svg>Settings</div>
+    </nav>
+  </aside>
+  <div class="main">
+    <div class="top"><div class="back"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></div><div class="tt">People</div></div>
+    <div class="wrap">
+      <div class="profile">
+        <div class="av">MB</div>
+        <div><h1>Marcus Bell <span class="tag">Walk-in</span></h1><div class="meta">(804) 555-0142 · since Mar 2026</div></div>
+        <div class="menu" title="Merge customer · Edit"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg></div>
+      </div>
+      <div class="bal">
+        <div><div class="l">Store credit balance</div><div class="v t">$120.00</div></div>
+        <div class="a"><button class="b-issue">Issue credit</button><button class="b-redeem">Redeem</button></div>
+      </div>
+
+      <div class="secwrap">
+        <div class="sec">Credit history <span>append-only</span></div>
+        <div class="list">
+          <div class="r"><div class="ic up"><svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg></div><div class="w"><div class="n">Store credit issued</div><div class="m">Today 3:02 PM · 1 Pokémon lot</div></div><span class="amt p t">+$30</span></div>
+          <div class="r"><div class="ic dn"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m6 13 6 6 6-6"/></svg></div><div class="w"><div class="n">Redeemed credit</div><div class="m">Today 2:48 PM</div></div><span class="amt n t">−$60</span></div>
+          <div class="r"><div class="ic up"><svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg></div><div class="w"><div class="n">Store credit issued</div><div class="m">May 28 · 2 sneakers</div></div><span class="amt p t">+$150</span></div>
+        </div>
+      </div>
+
+      <div class="secwrap">
+        <div class="sec">Items from Marcus <span>by transaction</span></div>
+        <div class="txn">
+          <div class="txnh"><div class="d">Jun 19 · 3:02 PM</div><div class="p">paid <b>$30</b> credit</div></div>
+          <div class="itm"><div class="thumb"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></div><div class="in"><b>Pokémon lot</b><s>6 cards · not finished</s></div><span class="st pend">pending</span></div>
+        </div>
+        <div class="txn">
+          <div class="txnh"><div class="d">May 28 · 1:10 PM</div><div class="p">paid <b>$150</b> credit</div></div>
+          <div class="itm"><div class="thumb"><svg viewBox="0 0 24 24"><path d="M2 16h12l3-3 5 1v3a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M2 16l3-7h7l2 4"/></svg></div><div class="in"><b>Air Jordan 1 Bred</b><s>9.5 · DS</s></div><span class="st sold">sold</span></div>
+          <div class="itm"><div class="thumb"><svg viewBox="0 0 24 24"><path d="M2 16h12l3-3 5 1v3a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M2 16l3-7h7l2 4"/></svg></div><div class="in"><b>Yeezy Slide Onyx</b><s>10</s></div><span class="st stock">in stock</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

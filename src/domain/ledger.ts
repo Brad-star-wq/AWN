@@ -122,6 +122,66 @@ export class Ledger {
   }
 
   /**
+   * Manual adjustment — the dashboard's "issue / adjust credit". A signed,
+   * non-zero integer amount is posted as an `ADJUST` row (positive to grant
+   * credit, negative to correct it down). Still append-only: an adjustment is a
+   * new row, never an edit of an existing one.
+   */
+  async adjustCredit(args: {
+    customerId: string;
+    amountCents: Cents;
+    note?: string;
+    createdBy?: string;
+  }): Promise<LedgerEntry> {
+    if (!Number.isInteger(args.amountCents)) {
+      throw new Error(`Amount must be integer cents, got ${args.amountCents}`);
+    }
+    if (args.amountCents === 0) {
+      throw new Error('Adjustment amount must be non-zero');
+    }
+    return this.repo.appendEntry({
+      customerId: args.customerId,
+      kind: 'ADJUST',
+      deltaCents: args.amountCents,
+      source: 'MANUAL',
+      note: args.note,
+      createdBy: args.createdBy,
+    });
+  }
+
+  /**
+   * Reverse a prior credit draw-down — the refund path. A refund returns
+   * credit to the customer, so this appends a **positive** entry of kind
+   * `REVERSAL`. Append-only: a reversal is a new row, never an edit of the
+   * REDEEM it offsets.
+   *
+   * POS-agnostic by construction: the caller passes a generic
+   * `idempotencyKey` (e.g. the refund id namespaced by the app); the engine
+   * has no concept of refunds or Square. Idempotent on that key, so a retried
+   * refund webhook can't return credit twice.
+   */
+  async reverse(args: {
+    customerId: string;
+    amountCents: Cents;
+    sourceRef?: string;
+    idempotencyKey?: string;
+    note?: string;
+    createdBy?: string;
+  }): Promise<LedgerEntry> {
+    assertPositive(args.amountCents);
+    return this.repo.appendEntry({
+      customerId: args.customerId,
+      kind: 'REVERSAL',
+      deltaCents: args.amountCents, // positive: credit returns to the customer
+      source: 'SALE',
+      sourceRef: args.sourceRef,
+      idempotencyKey: args.idempotencyKey,
+      note: args.note,
+      createdBy: args.createdBy,
+    });
+  }
+
+  /**
    * Apply a normalized sale event to the ledger.
    *
    * Finds the store-credit tender, resolves the customer by POS id, and

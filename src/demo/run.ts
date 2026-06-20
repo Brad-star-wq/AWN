@@ -26,20 +26,7 @@ import { MockPosAdapter, MockOrderPayload } from '../adapters/mockPosAdapter';
 import { buildRealisticDay } from '../adapters/mockScenario';
 import { ApplyResult } from '../domain/ledger';
 import { SaleEvent } from '../domain/types';
-
-// ---- formatting helpers ----------------------------------------------------
-
-const RULE = '═'.repeat(64);
-
-function money(cents: number): string {
-  const sign = cents < 0 ? '-' : '';
-  const abs = Math.abs(cents);
-  return `${sign}$${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, '0')}`;
-}
-
-function heading(label: string): void {
-  console.log(`\n▸ ${label}`);
-}
+import { RULE, money, heading } from './format';
 
 async function main(): Promise<void> {
   // ---- wiring: one shared customer store across ledger + intake -----------

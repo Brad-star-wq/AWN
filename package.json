@@ -4,14 +4,23 @@
   "description": "POS-agnostic core of a resale shop's back-office: store-credit ledger, intake, drafts, reconciliation.",
   "type": "module",
   "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "test:pg": "node --env-file-if-exists=.env --import tsx --test \"test/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "demo": "node --import tsx src/demo/run.ts"
+    "demo": "node --import tsx src/demo/run.ts",
+    "demo:pg": "node --env-file-if-exists=.env --import tsx src/demo/runPg.ts",
+    "db:setup": "node --env-file-if-exists=.env --import tsx src/adapters/pg/setup.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "postgres": "^3.4.9"
   }
 }

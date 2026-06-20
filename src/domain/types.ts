@@ -83,4 +83,6 @@ export interface DraftProduct {
   status: DraftStatus;
   online: boolean;
   posCatalogRef?: string;
+  /** When the stub was created — drives the drafts "aging" flag. Set by the store. */
+  createdAt?: string;
 }

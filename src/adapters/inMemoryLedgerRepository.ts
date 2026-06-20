@@ -1,4 +1,4 @@
-import { LedgerRepository } from '../ports/ledgerRepository';
+import { LedgerEntryFilter, LedgerRepository } from '../ports/ledgerRepository';
 import { Cents, Customer, LedgerEntry, NewLedgerEntry } from '../domain/types';
 import { InMemoryCustomerRepository } from './inMemoryCustomerRepository';
 
@@ -74,6 +74,16 @@ export class InMemoryLedgerRepository implements LedgerRepository {
 
   async hasIdempotencyKey(key: string): Promise<boolean> {
     return this.byIdempotencyKey.has(key);
+  }
+
+  async listEntries(filter: LedgerEntryFilter = {}): Promise<LedgerEntry[]> {
+    let rows = this.entries.map((e, i) => ({ e, i }));
+    if (filter.customerId) rows = rows.filter((r) => r.e.customerId === filter.customerId);
+    if (filter.sinceIso) rows = rows.filter((r) => r.e.createdAt >= filter.sinceIso!);
+    // Newest first: by createdAt desc, then insertion order desc as the tiebreak.
+    rows.sort((a, b) => (a.e.createdAt !== b.e.createdAt ? (a.e.createdAt < b.e.createdAt ? 1 : -1) : b.i - a.i));
+    const out = rows.map((r) => r.e);
+    return filter.limit != null ? out.slice(0, filter.limit) : out;
   }
 
   /** Test helper: every entry recorded, in order. */
