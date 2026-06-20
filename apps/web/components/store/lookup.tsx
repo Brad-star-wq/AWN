@@ -20,6 +20,7 @@ export function StoreLookup({ recent }: { recent: Recent[] }) {
   const [results, setResults] = useState<CustomerPick[]>([]);
   const [selected, setSelected] = useState<Recent | null>(null);
   const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -37,6 +38,14 @@ export function StoreLookup({ recent }: { recent: Recent[] }) {
     const res = await customerCreate({ displayName: query.trim() });
     setBusy(false);
     if (res.ok) setSelected({ id: res.customerId, displayName: query.trim(), balanceCents: 0 });
+  }
+
+  async function createNamed() {
+    if (!newName.trim() || busy) return;
+    setBusy(true);
+    const res = await customerCreate({ displayName: newName.trim() });
+    setBusy(false);
+    if (res.ok) setSelected({ id: res.customerId, displayName: newName.trim(), balanceCents: 0 });
   }
 
   const list = query.trim() ? results : recent;
@@ -100,17 +109,28 @@ export function StoreLookup({ recent }: { recent: Recent[] }) {
           </div>
         </div>
 
-        {/* New customer — name only, never gate a buy behind a contact form. */}
+        {/* New customer — name only, never gate a buy behind a contact form.
+            Works two ways: search-then-add, OR the standalone button below. */}
         {query.trim() && results.length === 0 ? (
           <button className="pri" style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} disabled={busy} onClick={createAndSelect}>
             <UserPlus size={17} /> Add “{query.trim()}” as new customer
           </button>
+        ) : creating ? (
+          <div className="card pad" style={{ marginTop: 14 }}>
+            <div className="field" style={{ marginBottom: 10 }}>
+              <label>New customer name</label>
+              <input autoFocus value={newName} placeholder="Full name" onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && createNamed()} />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="pri" style={{ flex: 1 }} disabled={busy || !newName.trim()} onClick={createNamed}>{busy ? 'Creating…' : 'Create'}</button>
+              <button className="btn" onClick={() => { setCreating(false); setNewName(''); }}>Cancel</button>
+            </div>
+          </div>
         ) : (
           <button className="btn" style={{ marginTop: 14, width: '100%', justifyContent: 'center', padding: 12 }} onClick={() => setCreating(true)}>
             <UserPlus size={16} /> New customer
           </button>
         )}
-        {creating && !query.trim() && <p className="hint" style={{ marginTop: 8 }}>Type a name in the search box, then “Add as new customer”.</p>}
       </div>
     </div>
   );

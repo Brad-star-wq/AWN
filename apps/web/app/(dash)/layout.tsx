@@ -1,9 +1,10 @@
 import { requireOwner } from '@/lib/server/auth';
 import { Sidebar } from '@/components/shell/sidebar';
+import { MobileNav } from '@/components/shell/mobile-nav';
 
 // Every dashboard page is dynamic (reads live DB state) and owner-gated.
-// Header chrome is per-screen now (see the mockups): Today owns its greeting,
-// the step screens render their own <Topbar>. The layout is just sidebar + canvas.
+// Desktop: left rail + canvas. Mobile: the rail is hidden and a top app-bar +
+// drawer (MobileNav) takes over. Pages own their own header (DashHeader).
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -11,7 +12,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex min-h-screen bg-canvas text-ink">
       <Sidebar />
-      <main className="flex min-w-0 flex-1 flex-col overflow-auto">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <MobileNav />
+        <main className="flex min-w-0 flex-1 flex-col overflow-auto">{children}</main>
+      </div>
     </div>
   );
 }

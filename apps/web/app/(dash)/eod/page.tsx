@@ -3,13 +3,16 @@ import { TriangleAlert } from 'lucide-react';
 import { getEndOfDay } from '@/lib/server/queries';
 import { formatCentsShort, formatCents } from '@/lib/money';
 import { MarkReviewed } from '@/components/eod/mark-reviewed';
+import { DashHeader } from '@/components/shell/dash-header';
+import { dateLong } from '@/lib/format';
 
 export default async function EndOfDayPage() {
   const eod = await getEndOfDay();
   const attention = eod.unmatched.length + eod.negativeBalances.length;
 
   return (
-    <>
+    <div className="mx-auto w-full max-w-[1080px] px-4 py-7 md:px-12 md:pb-14 md:pt-10">
+      <DashHeader eyebrow="Dashboard" title="End of day" sub={dateLong()} />
       <div className="grid4">
         <div className="stat">
           <div className="k">Credit given</div>
@@ -65,6 +68,6 @@ export default async function EndOfDayPage() {
         Clear these and the day reconciles. Most days this list is empty. (Unmatched sales appear once Square sync is wired.)
       </p>
       <MarkReviewed />
-    </>
+    </div>
   );
 }

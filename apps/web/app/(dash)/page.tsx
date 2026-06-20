@@ -18,7 +18,7 @@ export default async function TodayPage() {
   const t = await getToday();
 
   return (
-    <div className="mx-auto w-full max-w-[1080px] px-12 pb-14 pt-10">
+    <div className="mx-auto w-full max-w-[1080px] px-4 py-7 md:px-12 md:pb-14 md:pt-10">
       <DashHeader eyebrow="Dashboard" title="Today" sub={dateTimeLong()} />
 
       {/* Flat hairline overview — only the liability cell is the dark money block. */}

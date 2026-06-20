@@ -30,7 +30,12 @@ export interface DraftRow {
   itemType: ItemType;
   sourceName: string;
   sourceCustomerId?: string;
+  /** The resale/list price (what it lists for; pushed to Square). */
   priceCents?: number;
+  /** The buy-in cost paid at intake (drives the finish-form margin). */
+  costCents?: number;
+  /** Full draft attributes, so the finish form can prefill every field. */
+  attributes: Record<string, unknown>;
   online: boolean;
   status: DraftStatus;
   createdAt?: string;

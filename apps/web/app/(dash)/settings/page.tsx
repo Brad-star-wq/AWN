@@ -1,11 +1,14 @@
 import { requireOwner } from '@/lib/server/auth';
 import { SignOut } from '@/components/sign-out';
+import { DashHeader } from '@/components/shell/dash-header';
 
 export default async function SettingsPage() {
   const user = await requireOwner();
 
   return (
-    <div className="formwrap">
+    <div className="mx-auto w-full max-w-[1080px] px-4 py-7 md:px-12 md:pb-14 md:pt-10">
+      <DashHeader eyebrow="Dashboard" title="Settings" />
+      <div className="formwrap">
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="pad" style={{ borderBottom: '1px solid var(--line)' }}>
           <span className="sect-title">Square connection</span>
@@ -72,6 +75,7 @@ export default async function SettingsPage() {
             The credit ledger is append-only in Postgres — full change history is retained by design (no row is ever edited or deleted).
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

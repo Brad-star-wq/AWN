@@ -26,14 +26,14 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
   return (
     <>
       {/* back bar */}
-      <div className="flex items-center gap-[14px] border-b border-line bg-surface px-8 py-[18px]">
+      <div className="flex items-center gap-[14px] border-b border-line bg-surface px-4 py-[18px] md:px-8">
         <Link href="/customers" className="flex h-9 w-9 items-center justify-center rounded-[8px] border border-line" aria-label="Back to People">
           <ArrowLeft size={18} strokeWidth={2} className="text-ink-soft" />
         </Link>
         <span className="font-display text-[15px] font-semibold">People</span>
       </div>
 
-      <div className="w-full max-w-[920px] px-10 py-9">
+      <div className="w-full max-w-[920px] px-4 py-6 md:px-10 md:py-9">
         {/* profile head */}
         <div className="mb-[26px] flex items-center gap-4">
           <span className="flex h-[58px] w-[58px] flex-none items-center justify-center rounded-[13px] bg-accent-soft font-display text-xl font-bold text-accent">{initials(c.displayName)}</span>

@@ -23,7 +23,10 @@ type Line = {
   id: string;
   category: string;
   itemType: BuyLineInput['itemType'];
-  qty: number;
+  // A line is either SLOTTED (built by taps — count = slots.length, each an
+  // addressable item) or a BATCH (a typed count — one batch you price as a
+  // total or itemize on demand). batchQty != null means batch mode.
+  batchQty: number | null;
   groupCents: number | null; // group total typed on the price cell (path 2)
   slots: Slot[];
 };
@@ -32,7 +35,12 @@ function initials(name: string) {
   return name.split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
 }
 const uid = () => Math.random().toString(36).slice(2, 9);
+const emptySlot = (): Slot => ({ name: '', priceCents: null, showAdv: false, showNote: false });
 
+// How many items the line represents (batch count wins; else the slot count).
+function lineCount(line: Line): number {
+  return line.batchQty ?? line.slots.length;
+}
 // Sum of a line's slot prices, or null if none are priced.
 function slotSum(line: Line): number | null {
   const priced = line.slots.filter((s) => s.priceCents != null);
@@ -59,15 +67,18 @@ export function BuyEngine({ customer }: { customer: CustomerPick }) {
   const derivedCents = useMemo(() => lines.reduce((n, l) => n + lineCents(l), 0), [lines]);
   const payoutCents = lumpCents ?? derivedCents;
 
+  // Each tap adds one addressable slot (count = number of slots). If the line
+  // is a typed batch, a tap bumps the batch count instead of spawning a slot.
   function bump(cat: { label: string; itemType: Line['itemType'] }) {
     setLines((prev) => {
       const i = prev.findIndex((l) => l.category === cat.label);
       if (i >= 0) {
         const copy = [...prev];
-        copy[i] = { ...copy[i]!, qty: copy[i]!.qty + 1 };
+        const l = copy[i]!;
+        copy[i] = l.batchQty != null ? { ...l, batchQty: l.batchQty + 1 } : { ...l, slots: [...l.slots, emptySlot()] };
         return copy;
       }
-      return [...prev, { id: uid(), category: cat.label, itemType: cat.itemType, qty: 1, groupCents: null, slots: [] }];
+      return [...prev, { id: uid(), category: cat.label, itemType: cat.itemType, batchQty: null, groupCents: null, slots: [emptySlot()] }];
     });
   }
   function patchLine(id: string, patch: Partial<Line>) {
@@ -79,11 +90,7 @@ export function BuyEngine({ customer }: { customer: CustomerPick }) {
     );
   }
   function addSlot(lineId: string) {
-    setLines((prev) =>
-      prev.map((l) =>
-        l.id === lineId ? { ...l, slots: [...l.slots, { name: '', priceCents: null, showAdv: false, showNote: false }] } : l,
-      ),
-    );
+    setLines((prev) => prev.map((l) => (l.id === lineId ? { ...l, slots: [...l.slots, emptySlot()] } : l)));
   }
   function toggleOpen(id: string) {
     setOpenId((cur) => (cur === id ? null : id)); // auto-close the previous
@@ -96,7 +103,7 @@ export function BuyEngine({ customer }: { customer: CustomerPick }) {
     const payloadLines: BuyLineInput[] = lines.map((l) => ({
       itemType: l.itemType,
       category: l.category,
-      qty: l.qty,
+      qty: lineCount(l),
       slots: l.slots.map((s) => ({
         ...(s.name.trim() ? { name: s.name.trim() } : {}),
         ...(s.priceCents != null ? { priceCents: s.priceCents } : {}),
@@ -167,12 +174,13 @@ export function BuyEngine({ customer }: { customer: CustomerPick }) {
                     style={{ width: 58 }}
                     autoFocus
                     inputMode="numeric"
-                    defaultValue={String(line.qty)}
-                    onBlur={(e) => { patchLine(line.id, { qty: Math.max(1, parseInt(e.target.value || '1', 10) || 1) }); setEditingQty(null); }}
+                    defaultValue={String(lineCount(line))}
+                    // Typing a count sets a BATCH (no slots spawned); itemize on demand later.
+                    onBlur={(e) => { patchLine(line.id, { batchQty: Math.max(1, parseInt(e.target.value || '1', 10) || 1) }); setEditingQty(null); }}
                     onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
                   />
                 ) : (
-                  <button className="qty" onClick={() => setEditingQty(line.id)}><span className="x">×</span>{line.qty}</button>
+                  <button className="qty" onClick={() => setEditingQty(line.id)}><span className="x">×</span>{lineCount(line)}</button>
                 )}
                 {/* price cell — group total (path 2), tappable, never auto-split */}
                 <PriceCell cents={lc || null} hasSlots={slotSum(line) != null} onSet={(c) => patchLine(line.id, { groupCents: c })} />
@@ -191,7 +199,7 @@ export function BuyEngine({ customer }: { customer: CustomerPick }) {
                   ))}
                   <div className="batch" style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 10, border: '1px dashed var(--line)', borderRadius: 9, padding: 13 }}>
                     <span style={{ fontFamily: 'var(--ui)', fontWeight: 600, fontSize: 13, color: 'var(--ink-soft)' }}>
-                      Or set one total for all {line.qty} on the line price above.
+                      Or set one total for all {lineCount(line)} on the line price above.
                     </span>
                   </div>
                 </div>

@@ -78,7 +78,7 @@ export async function intakeCreate(input: IntakeInput): Promise<ActionResult<{ c
           ? { id: input.customerId }
           : { displayName: input.displayName!.trim(), ...(phone ? { phone } : {}) },
         creditCents: totalCents,
-        items: input.items.map((it) => ({ itemType: it.itemType, attributes: { ...it.attributes, txnId }, priceCents: it.payoutCents })),
+        items: input.items.map((it) => ({ itemType: it.itemType, attributes: { ...it.attributes, txnId, costCents: it.payoutCents } })),
         note: 'Intake — store credit',
         idempotencyKey: txnId,
       },
@@ -94,7 +94,7 @@ export async function intakeCreate(input: IntakeInput): Promise<ActionResult<{ c
     : await resolveCashCustomer(input);
   if (!customer) return { ok: false, error: 'Customer not found.' };
   for (const it of input.items) {
-    await engine.draftRepo.create({ sourceCustomerId: customer.id, itemType: it.itemType, attributes: { ...it.attributes, txnId }, priceCents: it.payoutCents });
+    await engine.draftRepo.create({ sourceCustomerId: customer.id, itemType: it.itemType, attributes: { ...it.attributes, txnId, costCents: it.payoutCents } });
   }
   refreshAll();
   return { ok: true, customerId: customer.id };
@@ -146,19 +146,22 @@ export async function buyCreate(input: {
   // so the profile can group "items by transaction" off our own tables.
   const txnId = input.idempotencyKey ?? randomUUID();
 
-  // A line drilled into slots persists as one draft PER slot (the itemized
-  // individuals); an un-itemized line persists as ONE batch draft carrying the
-  // count. A group total is never split across items — it only fed the payout.
-  const stubs: Array<{ itemType: ItemType; attributes: Record<string, unknown>; priceCents?: number }> = [];
+  // Each itemized slot persists as one draft (the addressable individual); any
+  // remaining un-itemized count persists as ONE batch draft. A slot's price is
+  // the buy-in COST (stored in attributes.costCents — the list price is set
+  // later in the finish form); a group total is never split across items.
+  const stubs: Array<{ itemType: ItemType; attributes: Record<string, unknown> }> = [];
   for (const line of input.lines) {
-    if (line.slots && line.slots.length > 0) {
-      for (const slot of line.slots) {
-        const attributes: Record<string, unknown> = { category: line.category, txnId, ...(slot.attributes ?? {}) };
-        if (slot.name) attributes.name = slot.name;
-        stubs.push({ itemType: line.itemType, attributes, ...(slot.priceCents !== undefined ? { priceCents: slot.priceCents } : {}) });
-      }
-    } else {
-      stubs.push({ itemType: line.itemType, attributes: { category: line.category, qty: Math.max(1, Math.floor(line.qty)), txnId } });
+    const slots = line.slots ?? [];
+    for (const slot of slots) {
+      const attributes: Record<string, unknown> = { category: line.category, txnId, ...(slot.attributes ?? {}) };
+      if (slot.name) attributes.name = slot.name;
+      if (slot.priceCents !== undefined) attributes.costCents = slot.priceCents;
+      stubs.push({ itemType: line.itemType, attributes });
+    }
+    const remainder = Math.max(0, Math.floor(line.qty) - slots.length);
+    if (remainder > 0) {
+      stubs.push({ itemType: line.itemType, attributes: { category: line.category, qty: remainder, txnId } });
     }
   }
 
@@ -199,7 +202,7 @@ export async function buyCreate(input: {
 
   stubs[0]!.attributes.cashPaidCents = input.payoutCents;
   for (const s of stubs) {
-    await engine.draftRepo.create({ sourceCustomerId: customer.id, itemType: s.itemType, attributes: s.attributes, ...(s.priceCents !== undefined ? { priceCents: s.priceCents } : {}) });
+    await engine.draftRepo.create({ sourceCustomerId: customer.id, itemType: s.itemType, attributes: s.attributes });
   }
   refreshAll();
   const balanceCents = await engine.ledger.getBalance(customer.id);

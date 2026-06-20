@@ -14,10 +14,10 @@ export default async function CustomersPage({ searchParams }: { searchParams: { 
   if (q) rows = rows.filter((r) => r.displayName.toLowerCase().includes(q) || (r.phone ?? '').toLowerCase().includes(q));
 
   return (
-    <div className="mx-auto w-full max-w-[1080px] px-12 pb-14 pt-10">
+    <div className="mx-auto w-full max-w-[1080px] px-4 py-7 md:px-12 md:pb-14 md:pt-10">
       <DashHeader eyebrow="Dashboard" title="People" sub={`${rows.length} customer${rows.length === 1 ? '' : 's'}`} />
 
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <form className="flex-1">
           <div className="search" style={{ width: '100%', marginLeft: 0 }}>
             <input name="q" defaultValue={searchParams.q ?? ''} placeholder="Search people by name or phone…" />

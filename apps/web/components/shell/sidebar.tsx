@@ -2,26 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Files, Users, Moon, Settings, ArrowRight, type LucideIcon } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { NAV, isNavActive } from './nav-items';
 
-type Item = { href: string; label: string; icon: LucideIcon };
-
-// Labeled back-office rail (dashboard mockups). Intake/Redeem are NOT here —
-// they live as the persistent actions in each page header (DashHeader).
-const NAV: Item[] = [
-  { href: '/', label: 'Today', icon: Home },
-  { href: '/drafts', label: 'Drafts', icon: Files },
-  { href: '/customers', label: 'People', icon: Users },
-  { href: '/eod', label: 'End of day', icon: Moon },
-  { href: '/settings', label: 'Settings', icon: Settings },
-];
-
+// Desktop rail — hidden on mobile (the MobileNav drawer takes over there).
 export function Sidebar() {
   const pathname = usePathname();
-  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
   return (
-    <aside className="flex w-[212px] flex-none flex-col border-r border-line bg-surface px-[14px] py-5">
+    <aside className="hidden w-[212px] flex-none flex-col border-r border-line bg-surface px-[14px] py-5 md:flex">
       <div className="flex items-center gap-[10px] px-2 pb-[22px] pt-[6px]">
         <div className="flex h-8 w-8 items-center justify-center rounded-[7px] bg-ink font-display text-[13px] font-bold text-white">AW</div>
         <div className="font-display text-sm font-semibold">A Win Nguyen</div>
@@ -33,7 +22,7 @@ export function Sidebar() {
             key={href}
             href={href}
             className={`flex items-center gap-[11px] rounded-[7px] px-[10px] py-[9px] font-display text-[13.5px] transition-colors ${
-              isActive(href) ? 'bg-accent-soft font-semibold text-ink' : 'font-medium text-ink-soft hover:bg-canvas'
+              isNavActive(pathname, href) ? 'bg-accent-soft font-semibold text-ink' : 'font-medium text-ink-soft hover:bg-canvas'
             }`}
           >
             <Icon size={17} strokeWidth={1.8} />

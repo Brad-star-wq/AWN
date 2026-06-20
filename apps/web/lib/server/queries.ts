@@ -42,13 +42,18 @@ function toActivityRow(e: LedgerEntry, names: Map<string, string>): ActivityRow 
 }
 
 function toDraftRow(d: DraftProduct, names: Map<string, string>): DraftRow {
+  const name = typeof d.attributes.name === 'string' ? d.attributes.name : '';
+  const category = typeof d.attributes.category === 'string' ? d.attributes.category : '';
+  const costCents = typeof d.attributes.costCents === 'number' ? d.attributes.costCents : undefined;
   return {
     id: d.id,
-    title: draftTitle(d.itemType, d.attributes),
+    title: name || draftTitle(d.itemType, d.attributes) || category || 'Item',
     itemType: d.itemType,
     sourceName: d.sourceCustomerId ? names.get(d.sourceCustomerId) ?? 'Customer' : 'Walk-in',
     ...(d.sourceCustomerId !== undefined ? { sourceCustomerId: d.sourceCustomerId } : {}),
     ...(d.priceCents !== undefined ? { priceCents: d.priceCents } : {}),
+    ...(costCents !== undefined ? { costCents } : {}),
+    attributes: d.attributes,
     online: d.online,
     status: d.status,
     ...(d.createdAt !== undefined ? { createdAt: d.createdAt } : {}),
