@@ -209,6 +209,61 @@ export async function buyCreate(input: {
   return { ok: true, customerId: customer.id, balanceCents };
 }
 
+// One detailed item taken in through the full intake/finish form. Issues credit
+// (or logs cash) AND creates a single richly-detailed draft in one step — the
+// "Save & issue credit" path. Catalog push stays a separate, later action.
+export async function intakeItemCreate(input: {
+  customerId?: string;
+  displayName?: string;
+  phone?: string;
+  payout: 'store_credit' | 'cash';
+  /** The price the shop is paying (cost / credit issued), integer cents. */
+  costCents: number;
+  /** Optional list price already decided at intake. */
+  listPriceCents?: number;
+  itemType: ItemType;
+  attributes: Record<string, unknown>;
+}): Promise<ActionResult<{ customerId: string; balanceCents: number; draftId: string }>> {
+  await requireOwner();
+  if (!Number.isInteger(input.costCents) || input.costCents <= 0) {
+    return { ok: false, error: 'Enter the price you’re paying.' };
+  }
+  if (!input.customerId && !input.displayName?.trim()) {
+    return { ok: false, error: 'Pick a customer or enter a name.' };
+  }
+  const txnId = randomUUID();
+  const phone = input.phone?.trim();
+  const attributes = { ...input.attributes, txnId, costCents: input.costCents };
+
+  if (input.payout === 'store_credit') {
+    const res = await createIntake(
+      {
+        customer: input.customerId ? { id: input.customerId } : { displayName: input.displayName!.trim(), ...(phone ? { phone } : {}) },
+        creditCents: input.costCents,
+        items: [{ itemType: input.itemType, attributes, ...(input.listPriceCents !== undefined ? { priceCents: input.listPriceCents } : {}) }],
+        note: 'Intake — store credit',
+        idempotencyKey: txnId,
+      },
+      { ledger: engine.ledger, customers: engine.customers, drafts: engine.draftRepo },
+    );
+    refreshAll();
+    return { ok: true, customerId: res.customer.id, balanceCents: await engine.ledger.getBalance(res.customer.id), draftId: res.drafts[0]?.id ?? '' };
+  }
+
+  const customer = input.customerId
+    ? await engine.customers.getCustomer(input.customerId)
+    : await resolveCashCustomer({ payout: 'cash', items: [], displayName: input.displayName, ...(phone ? { phone } : {}) });
+  if (!customer) return { ok: false, error: 'Customer not found.' };
+  const draft = await engine.draftRepo.create({
+    sourceCustomerId: customer.id,
+    itemType: input.itemType,
+    attributes: { ...attributes, cashPaidCents: input.costCents },
+    ...(input.listPriceCents !== undefined ? { priceCents: input.listPriceCents } : {}),
+  });
+  refreshAll();
+  return { ok: true, customerId: customer.id, balanceCents: await engine.ledger.getBalance(customer.id), draftId: draft.id };
+}
+
 // ---- Credit ----------------------------------------------------------------
 
 export async function redeemCredit(input: {

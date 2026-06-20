@@ -26,8 +26,14 @@ export function MoneyKeypad({
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', 'back'];
   const capped = maxCents !== undefined && cents >= maxCents;
 
+  // Keyboard: digits type, Backspace deletes — no mouse needed.
+  function onKey(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (/^[0-9]$/.test(e.key)) { e.preventDefault(); press(e.key); }
+    else if (e.key === 'Backspace') { e.preventDefault(); press('back'); }
+  }
+
   return (
-    <div>
+    <div tabIndex={0} onKeyDown={onKey} style={{ outline: 'none' }} aria-label="Amount keypad">
       <div
         className="num"
         style={{ textAlign: 'center', fontSize: 40, fontWeight: 800, padding: '8px 0 14px', color: cents > 0 ? 'var(--ink)' : 'var(--faint)' }}

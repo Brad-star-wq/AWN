@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { draftPush, draftSetOnline, draftsBulkPush } from '@/lib/actions';
 import { formatCents } from '@/lib/money';
 import { ageDays, itemEmoji } from '@/lib/format';
-import { FinishItemForm } from '@/components/drafts/finish-item-form';
+import { FinishIntakeForm } from '@/components/drafts/finish-intake-form';
 import type { DraftRow } from '@/lib/types';
 
 type Tab = 'all' | 'toFinish' | 'ready';
@@ -128,7 +128,7 @@ export function DraftsTable({ drafts }: { drafts: DraftRow[] }) {
         Finish opens the full item form — set the list price &amp; details, then push to the catalog. Drafts aging past 2 days are flagged.
       </p>
 
-      {editing && <FinishItemForm draft={editing} onClose={() => setEditing(null)} saveLabel="Save draft" />}
+      {editing && <FinishIntakeForm draft={editing} onClose={() => setEditing(null)} />}
     </>
   );
 }
