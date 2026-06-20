@@ -1,5 +1,6 @@
 'use server';
 
+import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import type { Customer } from '@engine/domain/types';
 import { createIntake } from '@engine/domain/intake';
@@ -67,6 +68,8 @@ export async function intakeCreate(input: IntakeInput): Promise<ActionResult<{ c
     return { ok: false, error: 'Pick an existing customer or enter a name.' };
   }
 
+  const txnId = randomUUID(); // groups these items as one transaction on the profile
+
   if (input.payout === 'store_credit') {
     const phone = input.phone?.trim();
     const res = await createIntake(
@@ -75,8 +78,9 @@ export async function intakeCreate(input: IntakeInput): Promise<ActionResult<{ c
           ? { id: input.customerId }
           : { displayName: input.displayName!.trim(), ...(phone ? { phone } : {}) },
         creditCents: totalCents,
-        items: input.items.map((it) => ({ itemType: it.itemType, attributes: it.attributes })),
+        items: input.items.map((it) => ({ itemType: it.itemType, attributes: { ...it.attributes, txnId }, priceCents: it.payoutCents })),
         note: 'Intake — store credit',
+        idempotencyKey: txnId,
       },
       { ledger: engine.ledger, customers: engine.customers, drafts: engine.draftRepo },
     );
@@ -90,7 +94,7 @@ export async function intakeCreate(input: IntakeInput): Promise<ActionResult<{ c
     : await resolveCashCustomer(input);
   if (!customer) return { ok: false, error: 'Customer not found.' };
   for (const it of input.items) {
-    await engine.draftRepo.create({ sourceCustomerId: customer.id, itemType: it.itemType, attributes: it.attributes });
+    await engine.draftRepo.create({ sourceCustomerId: customer.id, itemType: it.itemType, attributes: { ...it.attributes, txnId }, priceCents: it.payoutCents });
   }
   refreshAll();
   return { ok: true, customerId: customer.id };
@@ -138,20 +142,23 @@ export async function buyCreate(input: {
     return { ok: false, error: 'Pick a customer or enter a name.' };
   }
 
-  // Expand each line into qty stubs; slot detail/price rides on the first
-  // slots, the rest are bare category stubs. Prices are never auto-split.
+  // One transaction id stamped on every stub (and used as the credit-issue key),
+  // so the profile can group "items by transaction" off our own tables.
+  const txnId = input.idempotencyKey ?? randomUUID();
+
+  // A line drilled into slots persists as one draft PER slot (the itemized
+  // individuals); an un-itemized line persists as ONE batch draft carrying the
+  // count. A group total is never split across items — it only fed the payout.
   const stubs: Array<{ itemType: ItemType; attributes: Record<string, unknown>; priceCents?: number }> = [];
   for (const line of input.lines) {
-    const qty = Math.max(1, Math.floor(line.qty));
-    for (let i = 0; i < qty; i++) {
-      const slot = line.slots?.[i];
-      const attributes: Record<string, unknown> = { category: line.category, ...(slot?.attributes ?? {}) };
-      if (slot?.name) attributes.name = slot.name;
-      stubs.push({
-        itemType: line.itemType,
-        attributes,
-        ...(slot?.priceCents !== undefined ? { priceCents: slot.priceCents } : {}),
-      });
+    if (line.slots && line.slots.length > 0) {
+      for (const slot of line.slots) {
+        const attributes: Record<string, unknown> = { category: line.category, txnId, ...(slot.attributes ?? {}) };
+        if (slot.name) attributes.name = slot.name;
+        stubs.push({ itemType: line.itemType, attributes, ...(slot.priceCents !== undefined ? { priceCents: slot.priceCents } : {}) });
+      }
+    } else {
+      stubs.push({ itemType: line.itemType, attributes: { category: line.category, qty: Math.max(1, Math.floor(line.qty)), txnId } });
     }
   }
 
@@ -159,7 +166,7 @@ export async function buyCreate(input: {
   // leaves one "Other" pending stub — it appears in the queue to itemize /
   // photograph later (the "no time" scenario). Pure zero-item credit issuance
   // (migration / starting balance) is a People-screen concern, not the buy flow.
-  if (stubs.length === 0) stubs.push({ itemType: 'OTHER', attributes: { category: 'Other' } });
+  if (stubs.length === 0) stubs.push({ itemType: 'OTHER', attributes: { category: 'Other', txnId } });
 
   const phone = input.phone?.trim();
 
@@ -172,7 +179,7 @@ export async function buyCreate(input: {
         creditCents: input.payoutCents,
         items: stubs,
         note: 'In-store buy — store credit',
-        ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
+        idempotencyKey: txnId,
       },
       { ledger: engine.ledger, customers: engine.customers, drafts: engine.draftRepo },
     );

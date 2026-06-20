@@ -12,8 +12,9 @@ import type {
   CustomerRow,
   DraftRow,
   EodSnapshot,
-  ItemSoldRow,
   TodaySnapshot,
+  TxnGroup,
+  TxnItem,
 } from '@/lib/types';
 
 function startOfTodayIso(): string {
@@ -146,20 +147,69 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetailData 
     engine.draftRepo.list({ sourceCustomerId: id }),
   ]);
 
-  const itemsSold: ItemSoldRow[] = drafts.map((d) => ({
-    id: d.id,
-    title: draftTitle(d.itemType, d.attributes),
-    itemType: d.itemType,
-    ...(d.priceCents !== undefined ? { priceCents: d.priceCents } : {}),
-  }));
+  // Items grouped by the transaction that took them in — the non-negotiable,
+  // read entirely from our own tables. We join the credit-issue entry by its
+  // sourceRef (= txnId) for the amount/date; cash buys carry the amount on a
+  // stub. Drafts predating txnId fall back to grouping by their created day.
+  const issueBySource = new Map<string, (typeof entries)[number]>();
+  for (const e of entries) if (e.kind === 'ISSUE' && e.sourceRef) issueBySource.set(e.sourceRef, e);
+
+  const groups = new Map<string, DraftProduct[]>();
+  for (const d of drafts) {
+    const txnId =
+      (typeof d.attributes.txnId === 'string' && d.attributes.txnId) ||
+      (d.createdAt ? `day:${d.createdAt.slice(0, 10)}` : `d:${d.id}`);
+    const arr = groups.get(txnId) ?? [];
+    arr.push(d);
+    groups.set(txnId, arr);
+  }
+
+  const transactions: TxnGroup[] = [];
+  for (const [txnId, ds] of groups) {
+    const issue = issueBySource.get(txnId);
+    const cashDraft = ds.find((d) => typeof d.attributes.cashPaidCents === 'number');
+    const draftDates = ds.map((d) => d.createdAt).filter((s): s is string => !!s).sort();
+    const dateIso = issue?.createdAt ?? draftDates[0] ?? new Date(0).toISOString();
+    const payout: TxnGroup['payout'] = issue ? 'store_credit' : cashDraft ? 'cash' : 'unknown';
+    const amountCents = issue ? issue.deltaCents : cashDraft ? Number(cashDraft.attributes.cashPaidCents) : 0;
+    transactions.push({ id: txnId, dateIso, payout, amountCents, items: ds.map(toTxnItem) });
+  }
+  transactions.sort((a, b) => b.dateIso.localeCompare(a.dateIso)); // newest first
+
+  const firstSeen = [...entries.map((e) => e.createdAt), ...drafts.map((d) => d.createdAt)]
+    .filter((s): s is string => !!s)
+    .sort()[0];
 
   return {
     id: customer.id,
     displayName: customer.displayName,
     ...(customer.phone !== undefined ? { phone: customer.phone } : {}),
     balanceCents,
+    ...(firstSeen ? { memberSinceIso: firstSeen } : {}),
     history: entries.map((e) => toActivityRow(e, names)),
-    itemsSold,
+    transactions,
+  };
+}
+
+function toTxnItem(d: DraftProduct): TxnItem {
+  const a = d.attributes;
+  const name = typeof a.name === 'string' ? a.name : '';
+  const category = typeof a.category === 'string' ? a.category : '';
+  const title = name || category || draftTitle(d.itemType, a);
+  // Detail: itemized advanced fields, else a batch count, else a finish hint.
+  const adv = ['size', 'condition', 'brand'].map((k) => (typeof a[k] === 'string' ? (a[k] as string) : '')).filter(Boolean);
+  const qty = typeof a.qty === 'number' ? a.qty : 0;
+  const bits: string[] = [];
+  if (adv.length) bits.push(adv.join(' · '));
+  else if (qty > 1) bits.push(`${qty} ${(category || 'items').toLowerCase()}`);
+  if (d.status !== 'PUSHED' && d.priceCents === undefined) bits.push('not finished');
+  const detail = bits.join(' · ');
+  return {
+    id: d.id,
+    title,
+    itemType: d.itemType,
+    status: d.status === 'PUSHED' ? 'in_stock' : 'pending',
+    ...(detail ? { detail } : {}),
   };
 }
 

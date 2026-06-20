@@ -5,7 +5,15 @@ import { useRouter } from 'next/navigation';
 import { adjustCredit } from '@/lib/actions';
 import { parseDollarsToCents } from '@/lib/money';
 
-export function IssueAdjustCredit({ customerId }: { customerId: string }) {
+export function IssueAdjustCredit({
+  customerId,
+  triggerLabel = 'Issue / adjust credit',
+  triggerClassName = 'btn sm',
+}: {
+  customerId: string;
+  triggerLabel?: string;
+  triggerClassName?: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'issue' | 'deduct'>('issue');
@@ -37,8 +45,8 @@ export function IssueAdjustCredit({ customerId }: { customerId: string }) {
 
   return (
     <>
-      <button className="btn sm" onClick={() => setOpen(true)}>
-        Issue / adjust credit
+      <button className={triggerClassName} onClick={() => setOpen(true)}>
+        {triggerLabel}
       </button>
       {open && (
         <div

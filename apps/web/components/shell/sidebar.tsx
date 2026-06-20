@@ -2,66 +2,58 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Home,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  Files,
-  Users,
-  Boxes,
-  Settings,
-  Moon,
-  Smartphone,
-  type LucideIcon,
-} from 'lucide-react';
+import { Home, Files, Users, Moon, Settings, ArrowRight, type LucideIcon } from 'lucide-react';
 
 type Item = { href: string; label: string; icon: LucideIcon };
 
-// Top group flows from the top; the bottom group pins to the foot (mt-auto).
-const TOP: Item[] = [
+// Labeled back-office rail (dashboard mockups). Intake/Redeem are NOT here —
+// they live as the persistent actions in each page header (DashHeader).
+const NAV: Item[] = [
   { href: '/', label: 'Today', icon: Home },
-  { href: '/intake', label: 'Intake', icon: ArrowDownToLine },
-  { href: '/redeem', label: 'Redeem', icon: ArrowUpFromLine },
   { href: '/drafts', label: 'Drafts', icon: Files },
   { href: '/customers', label: 'People', icon: Users },
-  { href: '/inventory', label: 'Inventory', icon: Boxes },
-];
-const BOTTOM: Item[] = [
-  { href: '/store', label: 'Store', icon: Smartphone },
+  { href: '/eod', label: 'End of day', icon: Moon },
   { href: '/settings', label: 'Settings', icon: Settings },
-  { href: '/eod', label: 'End day', icon: Moon },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
-
-  const item = ({ href, label, icon: Icon }: Item, pinned = false) => {
-    const active = isActive(href);
-    return (
-      <Link
-        key={href}
-        href={href}
-        className={`relative flex h-[54px] w-[60px] flex-col items-center justify-center gap-1 rounded-[10px] transition-colors ${
-          active
-            ? 'text-ink before:absolute before:-left-[10px] before:top-[13px] before:bottom-[13px] before:w-[3px] before:rounded-r-[3px] before:bg-accent before:content-[""]'
-            : 'text-faint hover:text-ink-soft'
-        } ${pinned ? 'mt-auto' : ''}`}
-      >
-        <Icon size={20} strokeWidth={1.9} />
-        <span className="text-[10.5px] font-semibold">{label}</span>
-      </Link>
-    );
-  };
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
   return (
-    <aside className="flex w-20 flex-none flex-col items-center gap-1 border-r border-line bg-surface py-5">
-      <div className="mb-5 flex h-[42px] w-[42px] items-center justify-center rounded-[11px] bg-ink font-display text-sm font-extrabold tracking-wide text-white">
-        AW
+    <aside className="flex w-[212px] flex-none flex-col border-r border-line bg-surface px-[14px] py-5">
+      <div className="flex items-center gap-[10px] px-2 pb-[22px] pt-[6px]">
+        <div className="flex h-8 w-8 items-center justify-center rounded-[7px] bg-ink font-display text-[13px] font-bold text-white">AW</div>
+        <div className="font-display text-sm font-semibold">A Win Nguyen</div>
       </div>
-      {TOP.map((it) => item(it))}
-      {BOTTOM.map((it, i) => item(it, i === 0))}
+
+      <nav className="flex flex-col gap-[2px]">
+        {NAV.map(({ href, label, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`flex items-center gap-[11px] rounded-[7px] px-[10px] py-[9px] font-display text-[13.5px] transition-colors ${
+              isActive(href) ? 'bg-accent-soft font-semibold text-ink' : 'font-medium text-ink-soft hover:bg-canvas'
+            }`}
+          >
+            <Icon size={17} strokeWidth={1.8} />
+            {label}
+          </Link>
+        ))}
+      </nav>
+
+      <div className="mt-auto flex flex-col gap-[10px]">
+        <Link
+          href="/store"
+          className="flex items-center justify-between rounded-[8px] border border-line px-3 py-[11px] font-display text-[13px] font-semibold text-ink transition-colors hover:bg-canvas"
+        >
+          Store mode <ArrowRight size={15} strokeWidth={2} className="text-ink-soft" />
+        </Link>
+        <div className="flex items-center gap-2 px-1 text-[12px] font-semibold text-muted">
+          <span className="h-[7px] w-[7px] rounded-full" style={{ background: '#5e9a86' }} />
+          Square connected
+        </div>
+      </div>
     </aside>
   );
 }

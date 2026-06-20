@@ -1,10 +1,23 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { getCustomerDetail } from '@/lib/server/queries';
 import { formatCents } from '@/lib/money';
-import { itemEmoji } from '@/lib/format';
+import { itemEmoji, txnDateLabel, memberSince } from '@/lib/format';
 import { ActivityRowView } from '@/components/activity-row';
 import { IssueAdjustCredit } from '@/components/customers/issue-adjust';
+import { ProfileMenu } from '@/components/customers/profile-menu';
+import type { TxnItem } from '@/lib/types';
+
+function initials(name: string) {
+  return name.split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
+}
+
+const STATUS: Record<TxnItem['status'], { label: string; bg: string; color: string }> = {
+  pending: { label: 'pending', bg: 'var(--warn-soft)', color: 'var(--warn)' },
+  in_stock: { label: 'in stock', bg: 'var(--accent-soft)', color: 'var(--accent)' },
+  sold: { label: 'sold', bg: 'var(--surface2)', color: 'var(--muted)' },
+};
 
 export default async function CustomerDetailPage({ params }: { params: { id: string } }) {
   const c = await getCustomerDetail(params.id);
@@ -12,45 +25,51 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
 
   return (
     <>
-      <Link className="btn sm" href="/customers" style={{ marginBottom: 16 }}>
-        ← Customers
-      </Link>
-
-      <div className="card" style={{ marginBottom: 18 }}>
-        <div className="pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 600 }}>
-              {c.displayName} <span className="badge tracked" style={{ marginLeft: 6 }}>Tracked</span>
-            </div>
-            <div className="sub" style={{ marginTop: 4 }}>{c.phone ?? 'No phone on file'}</div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div className="sub" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '.05em' }}>Store credit</div>
-            <div
-              className="num"
-              style={{ fontSize: 24, fontWeight: 600, color: c.balanceCents < 0 ? 'var(--warn)' : 'var(--teal-d)' }}
-            >
-              {formatCents(c.balanceCents)}
-            </div>
-          </div>
-        </div>
-        <div className="pad" style={{ borderTop: '1px solid var(--line)', display: 'flex', gap: 8 }}>
-          <Link className="btn primary sm" href={`/redeem?customer=${c.id}`}>
-            Redeem credit
-          </Link>
-          <IssueAdjustCredit customerId={c.id} />
-        </div>
+      {/* back bar */}
+      <div className="flex items-center gap-[14px] border-b border-line bg-surface px-8 py-[18px]">
+        <Link href="/customers" className="flex h-9 w-9 items-center justify-center rounded-[8px] border border-line" aria-label="Back to People">
+          <ArrowLeft size={18} strokeWidth={2} className="text-ink-soft" />
+        </Link>
+        <span className="font-display text-[15px] font-semibold">People</span>
       </div>
 
-      <div className="grid2">
-        <div className="card">
-          <div className="pad" style={{ borderBottom: '1px solid var(--line)' }}>
-            <span className="sect-title">Credit history</span>
+      <div className="w-full max-w-[920px] px-10 py-9">
+        {/* profile head */}
+        <div className="mb-[26px] flex items-center gap-4">
+          <span className="flex h-[58px] w-[58px] flex-none items-center justify-center rounded-[13px] bg-accent-soft font-display text-xl font-bold text-accent">{initials(c.displayName)}</span>
+          <div>
+            <h1 className="flex items-center gap-[10px] font-display text-[23px] font-semibold -tracking-[0.01em]">
+              {c.displayName}
+              <span className="rounded-[6px] bg-accent-soft px-[9px] py-[3px] font-display text-[11px] font-semibold text-accent">Walk-in</span>
+            </h1>
+            <div className="mt-[5px] text-[13px] font-medium text-muted">
+              {c.phone ?? 'No phone on file'}{c.memberSinceIso ? ` · ${memberSince(c.memberSinceIso)}` : ''}
+            </div>
+          </div>
+          <ProfileMenu />
+        </div>
+
+        {/* dark balance block */}
+        <div className="mb-[34px] flex items-center justify-between rounded-[11px] bg-ink px-[26px] py-[22px]">
+          <div>
+            <div className="font-display text-[12.5px] font-medium" style={{ color: '#9aa6b4' }}>Store credit balance</div>
+            <div className="num mt-[7px] text-[36px] font-extrabold -tracking-[0.01em] text-white">{formatCents(c.balanceCents)}</div>
+          </div>
+          <div className="flex gap-[10px]">
+            <IssueAdjustCredit customerId={c.id} triggerLabel="Issue credit" triggerClassName="store-issue-btn" />
+            <Link href={`/redeem?customer=${c.id}`} className="store-redeem-btn">Redeem</Link>
+          </div>
+        </div>
+
+        {/* credit history */}
+        <div className="mb-[30px]">
+          <div className="mb-[6px] flex items-center font-display text-[13px] font-semibold text-ink-soft">
+            Credit history <span className="ml-auto font-medium text-muted">append-only</span>
           </div>
           {c.history.length === 0 ? (
-            <div className="pad sub">No credit activity yet.</div>
+            <p className="border-t border-line py-5 text-sm text-muted">No credit activity yet.</p>
           ) : (
-            <div className="rowlist">
+            <div className="rowlist border-t border-line">
               {c.history.map((row) => (
                 <ActivityRowView key={row.id} row={row} showName={false} showDetail />
               ))}
@@ -58,24 +77,39 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
           )}
         </div>
 
-        <div className="card">
-          <div className="pad" style={{ borderBottom: '1px solid var(--line)' }}>
-            <span className="sect-title">Items sold to you</span>
-          </div>
-          {c.itemsSold.length === 0 ? (
-            <div className="pad sub">No items recorded.</div>
-          ) : (
-            <div className="rowlist">
-              {c.itemsSold.map((it) => (
-                <div className="row" key={it.id}>
-                  <span className="thumb">{itemEmoji[it.itemType]}</span>
-                  {it.title}
-                  <span className="amt num">{it.priceCents !== undefined ? formatCents(it.priceCents) : '—'}</span>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* items grouped by transaction — the non-negotiable, off our own data */}
+        <div className="mb-[6px] flex items-center font-display text-[13px] font-semibold text-ink-soft">
+          Items from {c.displayName.split(' ')[0]} <span className="ml-auto font-medium text-muted">by transaction</span>
         </div>
+        {c.transactions.length === 0 ? (
+          <p className="border-t border-line py-5 text-sm text-muted">No items taken in yet.</p>
+        ) : (
+          c.transactions.map((txn) => (
+            <div key={txn.id} className="mb-[11px] overflow-hidden rounded-[10px] border border-line">
+              <div className="flex items-center gap-[10px] px-4 py-[13px]" style={{ background: '#fafbfc' }}>
+                <span className="font-display text-[13.5px] font-semibold">{txnDateLabel(txn.dateIso)}</span>
+                <span className="ml-auto text-[12.5px] font-semibold text-muted">
+                  {txn.payout === 'unknown'
+                    ? 'recorded'
+                    : <>paid <b className="num font-extrabold text-accent">{formatCents(txn.amountCents)}</b> {txn.payout === 'cash' ? 'cash' : 'credit'}</>}
+                </span>
+              </div>
+              {txn.items.map((it) => {
+                const s = STATUS[it.status];
+                return (
+                  <div key={it.id} className="flex items-center gap-3 border-t border-line px-4 py-3">
+                    <span className="thumb">{itemEmoji[it.itemType]}</span>
+                    <div className="min-w-0 flex-1">
+                      <b className="font-display text-[13.5px] font-semibold">{it.title}</b>
+                      {it.detail ? <div className="text-[12px] text-muted">{it.detail}</div> : null}
+                    </div>
+                    <span className="font-display" style={{ fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 5, background: s.bg, color: s.color }}>{s.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        )}
       </div>
     </>
   );

@@ -68,11 +68,23 @@ export interface EodSnapshot {
   negativeBalances: NegativeBalanceRow[];
 }
 
-export interface ItemSoldRow {
+export type TxnItemStatus = 'pending' | 'in_stock' | 'sold';
+
+export interface TxnItem {
   id: string;
   title: string;
   itemType: ItemType;
-  priceCents?: number;
+  detail?: string;
+  status: TxnItemStatus;
+}
+
+/** Items a customer sold to the shop, grouped by the transaction that took them in. */
+export interface TxnGroup {
+  id: string;
+  dateIso: string;
+  payout: 'store_credit' | 'cash' | 'unknown';
+  amountCents: number;
+  items: TxnItem[];
 }
 
 export interface CustomerDetailData {
@@ -80,8 +92,9 @@ export interface CustomerDetailData {
   displayName: string;
   phone?: string;
   balanceCents: number;
+  memberSinceIso?: string;
   history: ActivityRow[];
-  itemsSold: ItemSoldRow[];
+  transactions: TxnGroup[];
 }
 
 export interface CustomerPick {

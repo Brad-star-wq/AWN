@@ -39,6 +39,20 @@ export function lastActivityLabel(iso: string | undefined, now: Date = new Date(
   return activityTime(iso, now);
 }
 
+/** "Jun 19 · 3:02 PM" — the transaction-group header. */
+export function txnDateLabel(iso: string): string {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return `${date} · ${time}`;
+}
+
+/** "since Mar 2026" from the earliest activity, or "" when unknown. */
+export function memberSince(iso: string | undefined): string {
+  if (!iso) return '';
+  return `since ${new Date(iso).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+}
+
 /** Whole days since `iso`. */
 export function ageDays(iso: string | undefined, now: Date = new Date()): number {
   if (!iso) return 0;
