@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Calculator, Camera, Check, ChevronRight, Plus, StickyNote } from 'lucide-react';
 import { buyCreate, type BuyLineInput } from '@/lib/actions';
 import { formatCents } from '@/lib/money';
 import { STORE_CATEGORIES, ADVANCED_OPTIONS } from '@/lib/categories';
 import { MoneyKeypad } from '@/components/store/money-keypad';
+import { ChipGroup, RovingRow } from '@/components/forms/button-group';
 import type { CustomerPick } from '@/lib/types';
 
 type Slot = {
@@ -63,9 +64,31 @@ export function BuyEngine({ customer }: { customer: CustomerPick }) {
   const [done, setDone] = useState<{ balanceCents: number; method: 'store_credit' | 'cash' } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const derivedCents = useMemo(() => lines.reduce((n, l) => n + lineCents(l), 0), [lines]);
   const payoutCents = lumpCents ?? derivedCents;
+
+  useEffect(() => {
+    if (showKeypad) rootRef.current?.querySelector<HTMLElement>('[aria-label="Amount keypad"]')?.focus();
+  }, [showKeypad]);
+
+  // Quick-pay keyboard model (no mouse): P jumps to the keypad, Space opens the
+  // focused line's drill-in, F fills it (opens + focuses its first item price).
+  function onShortcut(e: React.KeyboardEvent) {
+    const t = e.target as HTMLElement;
+    if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') return;
+    const k = e.key.toLowerCase();
+    if (k === 'p') { e.preventDefault(); setShowKeypad(true); }
+    else if (k === 'f') {
+      e.preventDefault();
+      const first = lines[0];
+      if (first) {
+        setOpenId(first.id);
+        setTimeout(() => rootRef.current?.querySelector<HTMLInputElement>('.slot .num')?.focus(), 0);
+      }
+    }
+  }
 
   // Each tap adds one addressable slot (count = number of slots). If the line
   // is a typed batch, a tap bumps the batch count instead of spawning a slot.
@@ -138,7 +161,7 @@ export function BuyEngine({ customer }: { customer: CustomerPick }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div ref={rootRef} onKeyDown={onShortcut} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* header */}
       <div className="bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, background: 'var(--surface)', borderBottom: '1px solid var(--line)' }}>
         <span style={{ fontFamily: 'var(--ui)', fontWeight: 600, fontSize: 15 }}>Buy from seller</span>
@@ -211,17 +234,22 @@ export function BuyEngine({ customer }: { customer: CustomerPick }) {
 
       {/* bottom action zone — the POS */}
       <div className="payout">
-        <div className="cats" style={{ marginBottom: 13 }}>
-          {STORE_CATEGORIES.map((c) => (
-            <button key={c.label} className="cat" onClick={() => bump(c)}>{c.label}</button>
-          ))}
-          <button className="cat" style={{ opacity: 0.5 }} title="More categories — Settings-driven (Phase E)" disabled>More</button>
+        <div style={{ marginBottom: 13 }}>
+          <RovingRow count={STORE_CATEGORIES.length} className="cats" ariaLabel="Categories">
+            {(itemProps) => (
+              <>
+                {STORE_CATEGORIES.map((c, i) => (
+                  <button key={c.label} type="button" className="cat" {...itemProps(i)} onClick={() => bump(c)}>{c.label}</button>
+                ))}
+                <button type="button" className="cat" style={{ opacity: 0.5 }} tabIndex={-1} title="More categories — Settings-driven (Phase E)" disabled>More</button>
+              </>
+            )}
+          </RovingRow>
         </div>
 
         {showKeypad && (
           <div className="card pad" style={{ marginBottom: 12 }}>
-            <MoneyKeypad cents={lumpCents ?? derivedCents} onChange={(c) => setLumpCents(c)} />
-            <button className="btn sm" style={{ width: '100%', justifyContent: 'center', marginTop: 10 }} onClick={() => setShowKeypad(false)}>Done</button>
+            <MoneyKeypad cents={lumpCents ?? derivedCents} onChange={(c) => setLumpCents(c)} onNext={() => setShowKeypad(false)} nextLabel="Done" />
           </div>
         )}
 
@@ -232,6 +260,7 @@ export function BuyEngine({ customer }: { customer: CustomerPick }) {
             <span className="v t">{formatCents(payoutCents)}</span>
           </div>
         </div>
+        <p className="hint" style={{ margin: '0 0 8px', textAlign: 'center' }}>Keys: <b>P</b> keypad · <b>Space</b> open line · <b>F</b> fill items</p>
         {error && <div className="err">{error}</div>}
         <button className="pri" disabled={busy} onClick={() => commit('store_credit')}>
           {busy ? 'Loading…' : `Load ${formatCents(payoutCents)} store credit`}
@@ -277,9 +306,16 @@ function SlotCard({ idx, slot, category, onPatch }: { idx: number; slot: Slot; c
       </div>
       {slot.showAdv && (
         <div className="advp">
-          {opts.sizes && <ChipRow label="Size" options={opts.sizes} value={slot.size} onPick={(v) => onPatch({ size: v })} />}
-          <ChipRow label="Condition" options={opts.conditions} value={slot.condition} onPick={(v) => onPatch({ condition: v })} />
-          {opts.brands.length > 0 && <ChipRow label="Brand" options={opts.brands} value={slot.brand} onPick={(v) => onPatch({ brand: v })} />}
+          {opts.sizes && (
+            <div className="af" style={{ marginBottom: 9 }}><div className="afl">Size</div>
+              <ChipGroup ariaLabel="Size" options={opts.sizes} value={slot.size} onSelect={(v) => onPatch({ size: slot.size === v ? '' : v })} /></div>
+          )}
+          <div className="af" style={{ marginBottom: 9 }}><div className="afl">Condition</div>
+            <ChipGroup ariaLabel="Condition" options={opts.conditions} value={slot.condition} onSelect={(v) => onPatch({ condition: slot.condition === v ? '' : v })} /></div>
+          {opts.brands.length > 0 && (
+            <div className="af" style={{ marginBottom: 9 }}><div className="afl">Brand</div>
+              <ChipGroup ariaLabel="Brand" options={opts.brands} value={slot.brand} onSelect={(v) => onPatch({ brand: slot.brand === v ? '' : v })} /></div>
+          )}
         </div>
       )}
       {slot.showNote && (
@@ -293,15 +329,3 @@ function SlotCard({ idx, slot, category, onPatch }: { idx: number; slot: Slot; c
   );
 }
 
-function ChipRow({ label, options, value, onPick }: { label: string; options: string[]; value?: string; onPick: (v: string) => void }) {
-  return (
-    <div className="af" style={{ marginBottom: 9 }}>
-      <div className="afl">{label}</div>
-      <div className="chips">
-        {options.map((o) => (
-          <button key={o} className={`chip${value === o ? ' on' : ''}`} onClick={() => onPick(value === o ? '' : o)}>{o}</button>
-        ))}
-      </div>
-    </div>
-  );
-}

@@ -9,10 +9,15 @@ export function MoneyKeypad({
   cents,
   onChange,
   maxCents,
+  onNext,
+  nextLabel = 'Next',
 }: {
   cents: number;
   onChange: (cents: number) => void;
   maxCents?: number;
+  /** Commit + advance — shown as a prominent key (last money field = "Done"). */
+  onNext?: () => void;
+  nextLabel?: string;
 }) {
   function press(k: string) {
     let next: number;
@@ -48,6 +53,11 @@ export function MoneyKeypad({
           </button>
         ))}
       </div>
+      {onNext && (
+        <button type="button" className="pri" style={{ marginTop: 10 }} onClick={onNext}>
+          {nextLabel}
+        </button>
+      )}
     </div>
   );
 }
