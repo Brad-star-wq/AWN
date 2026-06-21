@@ -292,10 +292,10 @@ function SlotCard({ idx, slot, category, onPatch }: { idx: number; slot: Slot; c
       <div className="sr">
         <span className="snum">{idx + 1}</span>
         <div className="sf">
-          <input style={{ border: 0, outline: 'none', font: 'inherit', fontFamily: 'var(--ui)', fontWeight: 600, fontSize: 14, width: '100%', background: 'transparent' }}
+          <input style={{ border: 0, outline: 'none', fontFamily: 'var(--ui)', fontWeight: 600, width: '100%', background: 'transparent' }}
             placeholder={`Item ${idx + 1} — add name`} value={slot.name} onChange={(e) => onPatch({ name: e.target.value })} />
         </div>
-        <input className="num" style={{ width: 64, textAlign: 'right', border: 0, outline: 'none', font: 'inherit', fontWeight: 800, fontSize: 15, background: 'transparent' }}
+        <input className="num" style={{ width: 64, textAlign: 'right', border: 0, outline: 'none', fontWeight: 800, background: 'transparent' }}
           inputMode="decimal" placeholder="$ —" defaultValue={slot.priceCents != null ? (slot.priceCents / 100).toString() : ''}
           onBlur={(e) => { const v = parseFloat(e.target.value); onPatch({ priceCents: Number.isFinite(v) ? Math.round(v * 100) : null }); }} />
         <Camera size={20} style={{ color: 'var(--faint)', flex: 'none' }} aria-label="Add photo (later)" />
@@ -321,7 +321,7 @@ function SlotCard({ idx, slot, category, onPatch }: { idx: number; slot: Slot; c
       {slot.showNote && (
         <div className="notep">
           <StickyNote size={13} style={{ color: 'var(--muted)', marginTop: 2, flex: 'none' }} />
-          <input style={{ border: 0, outline: 'none', font: 'inherit', width: '100%', background: 'transparent', color: 'var(--ink-soft)', fontWeight: 600 }}
+          <input style={{ border: 0, outline: 'none', width: '100%', background: 'transparent', color: 'var(--ink-soft)', fontWeight: 600 }}
             placeholder="e.g. box has wear, no lid" value={slot.note ?? ''} onChange={(e) => onPatch({ note: e.target.value })} />
         </div>
       )}

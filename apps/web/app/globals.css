@@ -320,6 +320,18 @@
   .ov .cell:last-child { border-bottom: none; }
 }
 
+/* iOS focus-zoom guard. Safari (and the installed PWA) auto-zooms when a focused
+   input/select/textarea has text under 16px, so field text is 16px on mobile and
+   drops to 14px on desktop. ONLY the text size changes — height, padding, gaps,
+   and labels stay tight per the density pass. Unlayered so it overrides the
+   component-layer and utility font sizes (inline font-size still wins, so a few
+   custom inputs set theirs via class, not inline). Not the viewport hack — pinch
+   zoom stays intact. Custom controls (keypad/chips/steppers) never zoom anyway. */
+input, select, textarea { font-size: 16px; }
+@media (min-width: 768px) {
+  input, select, textarea { font-size: 14px; }
+}
+
 /* Touch / mobile: density targets desktop — restore comfortable tap targets so
    nothing here is cramped or hard to hit (≥44px), same components. */
 @media (pointer: coarse) {
