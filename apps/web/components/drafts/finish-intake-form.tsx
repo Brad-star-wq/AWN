@@ -117,7 +117,7 @@ export function FinishIntakeForm({ draft, asPage = false, onClose }: { draft?: D
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent"><Check size={28} /></span>
           <div className="mt-2 font-display text-lg font-semibold">{payout === 'store_credit' ? 'Credit issued' : 'Cash buy logged'}</div>
           <div className="sub">New balance</div>
-          <div className="num text-[34px] font-extrabold text-accent">{formatCents(savedBalance)}</div>
+          <div className="num text-[26px] font-extrabold text-accent">{formatCents(savedBalance)}</div>
           <div className="mt-5 flex gap-2">
             <button type="button" className="btn primary" onClick={resetForNext}>New intake</button>
             <button type="button" className="btn" onClick={() => router.push('/drafts')}>Go to Drafts</button>
@@ -129,7 +129,7 @@ export function FinishIntakeForm({ draft, asPage = false, onClose }: { draft?: D
 
   return (
     <Shell asPage={asPage} onClose={onClose} title={mode === 'intake' ? 'New intake' : 'Finish item'} ctx={mode === 'finish' ? `${category}${cost != null ? ` · ${formatCents(cost)} cost` : ''} · ${draft!.sourceName}` : undefined}>
-      <FocusFlow order={ORDER} className="grid flex-1 grid-cols-1 gap-6 overflow-auto p-5 md:grid-cols-[1fr_300px] md:p-7">
+      <FocusFlow order={ORDER} className="grid flex-1 grid-cols-1 gap-5 overflow-auto p-4 md:grid-cols-[1fr_290px] md:p-5">
         <div>
           {err && <div className="err">{err}</div>}
 
@@ -241,7 +241,7 @@ function guessCategory(itemType: DraftRow['itemType']) {
   return itemType === 'SHOE' ? 'Sneakers' : itemType === 'CARD' ? 'Cards' : 'Other';
 }
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="mb-[20px]"><div className="mb-[9px] font-display text-[12px] font-semibold text-ink-soft">{label}</div>{children}</div>;
+  return <div className="mb-[13px]"><div className="flabel mb-[5px]">{label}</div>{children}</div>;
 }
 function MarginRow({ l, v, accent }: { l: string; v: string; accent?: boolean }) {
   return <div className="flex items-center justify-between py-1.5"><span className="font-display text-[12.5px] font-medium" style={{ color: '#9aa6b4' }}>{l}</span><span className="num text-base font-extrabold" style={accent ? { color: '#7fb8a3' } : undefined}>{v}</span></div>;

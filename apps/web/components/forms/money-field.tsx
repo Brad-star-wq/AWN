@@ -31,12 +31,12 @@ export function MoneyField({
           type="button"
           data-stop={stopId}
           onClick={() => setOpen(true)}
-          className="flex w-full max-w-[180px] items-center gap-1.5 border-b border-line py-[9px] text-left"
+          className="flex w-full max-w-[120px] items-center gap-1.5 border-b border-line py-[7px] text-left"
           style={{ outline: 'none' }}
           aria-label="Enter amount"
         >
           <span className="font-extrabold text-faint">$</span>
-          <span className="num text-[17px] font-extrabold" style={{ color: cents != null ? 'var(--ink)' : 'var(--faint)' }}>
+          <span className="num text-[16px] font-extrabold" style={{ color: cents != null ? 'var(--ink)' : 'var(--faint)' }}>
             {cents != null ? (cents / 100).toFixed(2) : '—'}
           </span>
         </button>
@@ -55,14 +55,14 @@ export function MoneyField({
   }
 
   return (
-    <div className="flex w-full max-w-[180px] items-center gap-1.5 border-b border-line focus-within:border-accent">
+    <div className="flex w-full max-w-[120px] items-center gap-1.5 border-b border-line focus-within:border-accent">
       <span className="font-extrabold text-faint">$</span>
       <input
         data-stop={stopId}
         inputMode="decimal"
         enterKeyHint="next"
         placeholder="0"
-        className="num w-full border-0 bg-transparent py-[9px] text-[17px] font-extrabold text-ink outline-none"
+        className="num w-full border-0 bg-transparent py-[7px] text-[16px] font-extrabold text-ink outline-none"
         value={txt}
         onChange={(e) => { setTxt(e.target.value); onCents(parseDollarsToCents(e.target.value)); }}
       />

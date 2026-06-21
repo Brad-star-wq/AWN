@@ -35,10 +35,10 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
 
       <div className="w-full max-w-[920px] px-4 py-6 md:px-10 md:py-9">
         {/* profile head */}
-        <div className="mb-[26px] flex items-center gap-4">
-          <span className="flex h-[58px] w-[58px] flex-none items-center justify-center rounded-[13px] bg-accent-soft font-display text-xl font-bold text-accent">{initials(c.displayName)}</span>
+        <div className="mb-[20px] flex items-center gap-4">
+          <span className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[11px] bg-surface2 font-display text-base font-semibold text-ink-soft">{initials(c.displayName)}</span>
           <div>
-            <h1 className="flex items-center gap-[10px] font-display text-[23px] font-semibold -tracking-[0.01em]">
+            <h1 className="flex items-center gap-[10px] font-display text-[19px] font-semibold -tracking-[0.01em]">
               {c.displayName}
               <span className="rounded-[6px] bg-accent-soft px-[9px] py-[3px] font-display text-[11px] font-semibold text-accent">Walk-in</span>
             </h1>
@@ -50,10 +50,10 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
         </div>
 
         {/* dark balance block */}
-        <div className="mb-[34px] flex items-center justify-between rounded-[11px] bg-ink px-[26px] py-[22px]">
+        <div className="mb-[26px] flex items-center justify-between rounded-[11px] bg-ink px-[20px] py-[16px]">
           <div>
-            <div className="font-display text-[12.5px] font-medium" style={{ color: '#9aa6b4' }}>Store credit balance</div>
-            <div className="num mt-[7px] text-[36px] font-extrabold -tracking-[0.01em] text-white">{formatCents(c.balanceCents)}</div>
+            <div className="font-display text-[11px] font-medium" style={{ color: '#9aa6b4' }}>Store credit balance</div>
+            <div className="num mt-[5px] text-[26px] font-extrabold -tracking-[0.01em] text-white">{formatCents(c.balanceCents)}</div>
           </div>
           <div className="flex gap-[10px]">
             <IssueAdjustCredit customerId={c.id} triggerLabel="Issue credit" triggerClassName="store-issue-btn" />

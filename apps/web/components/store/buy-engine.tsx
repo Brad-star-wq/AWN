@@ -154,7 +154,7 @@ export function BuyEngine({ customer }: { customer: CustomerPick }) {
           {done.method === 'store_credit' ? `Loaded ${formatCents(payoutCents)} store credit` : `Logged ${formatCents(payoutCents)} cash buy`}
         </div>
         <div className="sub">{customer.displayName}’s balance is now</div>
-        <div className="num" style={{ fontSize: 34, fontWeight: 800, color: 'var(--accent)' }}>{formatCents(done.balanceCents)}</div>
+        <div className="num" style={{ fontSize: 26, fontWeight: 800, color: 'var(--accent)' }}>{formatCents(done.balanceCents)}</div>
         <button className="pri" style={{ maxWidth: 240, marginTop: 18 }} onClick={() => router.push('/store')}>Next customer</button>
       </div>
     );

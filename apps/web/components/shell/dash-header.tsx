@@ -14,11 +14,11 @@ export function DashHeader({
   sub?: string;
 }) {
   return (
-    <div className="mb-7 flex flex-col gap-4 md:mb-10 md:flex-row md:items-start md:justify-between md:gap-6">
+    <div className="mb-5 flex flex-col gap-3 md:mb-7 md:flex-row md:items-start md:justify-between md:gap-6">
       <div>
         {eyebrow ? <div className="eyebrow" style={{ marginBottom: 0 }}>{eyebrow}</div> : null}
-        <h1 className="mt-2 font-display text-[22px] font-semibold -tracking-[0.02em] md:text-[26px]">{title}</h1>
-        {sub ? <div className="mt-[6px] text-[13.5px] font-medium text-muted">{sub}</div> : null}
+        <h1 className="mt-[5px] font-display text-[18px] font-semibold -tracking-[0.02em] md:text-[20px]">{title}</h1>
+        {sub ? <div className="mt-[4px] text-[12.5px] font-medium text-muted">{sub}</div> : null}
       </div>
       <div className="flex flex-none items-center gap-[10px]">
         <Link

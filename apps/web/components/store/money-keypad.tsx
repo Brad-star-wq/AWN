@@ -41,7 +41,7 @@ export function MoneyKeypad({
     <div tabIndex={0} onKeyDown={onKey} style={{ outline: 'none' }} aria-label="Amount keypad">
       <div
         className="num"
-        style={{ textAlign: 'center', fontSize: 40, fontWeight: 800, padding: '8px 0 14px', color: cents > 0 ? 'var(--ink)' : 'var(--faint)' }}
+        style={{ textAlign: 'center', fontSize: 30, fontWeight: 800, padding: '6px 0 12px', color: cents > 0 ? 'var(--ink)' : 'var(--faint)' }}
       >
         {formatCents(cents)}
       </div>

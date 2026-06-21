@@ -46,10 +46,23 @@
     font-family: var(--b);
     background: var(--canvas);
     color: var(--ink);
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 13px;
+    line-height: 1.45;
     -webkit-font-smoothing: antialiased;
   }
+}
+
+/* ============================================================
+   Shared type hierarchy (data-forward back-office density).
+   page-title > section-header > body > quiet micro-label > data.
+   Labels recede; values carry the weight.
+   ============================================================ */
+@layer components {
+  .t-title { font-family: var(--ui); font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  .t-section { font-family: var(--ui); font-size: 13px; font-weight: 600; color: var(--ink); }
+  /* Quiet micro-label — the ITEM / PAYOUT caps treatment, for ALL field labels. */
+  .t-label, .flabel { font-family: var(--ui); font-size: 10.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  .t-data { font-variant-numeric: tabular-nums; font-weight: 700; }
 }
 
 @layer components {
@@ -97,15 +110,15 @@
   .content { padding: 24px; max-width: 1080px; width: 100%; }
 
   /* ---- shared bits ---------------------------------------------------- */
-  .eyebrow { font-family: var(--ui); font-size: 11.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-  .grid2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
+  .eyebrow { font-family: var(--ui); font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .grid2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
-  .pad { padding: 16px 18px; }
+  .pad { padding: 13px 15px; }
 
-  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; }
-  .stat .k { font-size: 12px; color: var(--muted); font-weight: 500; }
-  .stat .v { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; margin-top: 5px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+  .stat .k { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .stat .v { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; margin-top: 4px; }
   .stat .v.pos, .stat .v.teal { color: var(--accent); }
 
   .sect-title { font-family: var(--ui); font-size: 13px; font-weight: 600; color: var(--ink); }
@@ -115,16 +128,16 @@
 
   /* lists / tables */
   .rowlist { display: flex; flex-direction: column; }
-  .rowlist .row { display: flex; align-items: center; gap: 12px; padding: 11px 18px; border-top: 1px solid var(--line-2); font-size: 13.5px; }
+  .rowlist .row { display: flex; align-items: center; gap: 11px; padding: 9px 14px; border-top: 1px solid var(--line-2); font-size: 13px; }
   .rowlist .row:first-child { border-top: 0; }
   .rowlist .time { font-size: 12px; color: var(--muted); width: 64px; flex: none; font-variant-numeric: tabular-nums; }
   .rowlist .amt { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
   .amt.pos { color: var(--accent); }
   .amt.neg { color: var(--ink-soft); }
 
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  thead th { text-align: left; font-family: var(--ui); font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 11px 18px; border-bottom: 1px solid var(--line); }
-  tbody td { padding: 11px 18px; border-bottom: 1px solid var(--line-2); vertical-align: middle; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { text-align: left; font-family: var(--ui); font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--line); }
+  tbody td { padding: 8px 14px; border-bottom: 1px solid var(--line-2); vertical-align: middle; }
   tbody tr:last-child td { border-bottom: 0; }
   tbody tr:hover { background: var(--canvas); }
   td .bal { font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -144,10 +157,11 @@
   .tabs button.on, .tabs a.on { background: var(--surface); color: var(--ink); font-weight: 600; }
 
   /* ---- forms ---------------------------------------------------------- */
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-family: var(--ui); font-size: 12.5px; font-weight: 500; color: var(--ink-soft); margin-bottom: 6px; }
+  .field { margin-bottom: 11px; }
+  /* quiet micro-label (caps), so the value reads first */
+  .field label { display: block; font-family: var(--ui); font-size: 10.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
   /* seamless underline inputs */
-  .field input, .field select { width: 100%; font-family: inherit; font-size: 14px; color: var(--ink); background: transparent; border: none; border-bottom: 1px solid var(--line); border-radius: 0; padding: 9px 2px; outline: none; transition: border-color .12s; }
+  .field input, .field select { width: 100%; font-family: inherit; font-size: 13.5px; color: var(--ink); background: transparent; border: none; border-bottom: 1px solid var(--line); border-radius: 0; padding: 7px 2px; outline: none; transition: border-color .12s; }
   .field input:focus, .field select:focus { border-bottom-color: var(--accent); box-shadow: none; }
   .field input::placeholder { color: var(--faint); }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -156,7 +170,7 @@
   .seg button.on { background: var(--accent); color: #fff; font-weight: 600; }
 
   /* finish-item form inputs — seamless underline (textarea keeps a hairline box) */
-  .finp { width: 100%; border: none; border-bottom: 1px solid var(--line); border-radius: 0; padding: 9px 2px; font-family: var(--b); font-weight: 600; font-size: 14px; color: var(--ink); outline: none; background: transparent; transition: border-color .12s; }
+  .finp { width: 100%; border: none; border-bottom: 1px solid var(--line); border-radius: 0; padding: 7px 2px; font-family: var(--b); font-weight: 600; font-size: 13.5px; color: var(--ink); outline: none; background: transparent; transition: border-color .12s; }
   .finp:focus { border-bottom-color: var(--accent); }
   .finp::placeholder { color: var(--faint); font-weight: 500; }
   textarea.finp { border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; }
@@ -174,12 +188,12 @@
 
   /* ---- redeem --------------------------------------------------------- */
   .redeem-wrap { max-width: 480px; }
-  .balance-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .balance-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 15px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   .balance-card .who { font-family: var(--ui); font-weight: 600; font-size: 14px; }
   .balance-card .who .sub { font-weight: 400; }
   .balance-card .b { text-align: right; }
-  .balance-card .b .k { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-  .balance-card .b .v { font-size: 22px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .balance-card .b .k { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+  .balance-card .b .v { font-size: 20px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
   .instruction { background: var(--accent-soft); border: 1px solid #d4dbe4; border-radius: var(--r); padding: 16px 18px; margin: 16px 0; font-size: 13.5px; color: var(--accent); line-height: 1.55; }
   .instruction b { color: var(--ink); }
   .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
@@ -219,13 +233,13 @@
 
   /* paying-out bar */
   .payout { border-top: 1px solid var(--line); padding: 13px 16px 16px; background: var(--surface); }
-  .tot { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
-  .tot .l { font-family: var(--ui); font-size: 13px; color: var(--muted); font-weight: 600; }
-  .tot .v { font-weight: 800; font-size: 25px; font-variant-numeric: tabular-nums; }
+  .tot { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .tot .l { font-family: var(--ui); font-size: 12px; color: var(--muted); font-weight: 600; }
+  .tot .v { font-weight: 800; font-size: 21px; font-variant-numeric: tabular-nums; }
   /* icon button — unoutlined, floating */
   .kp { width: 42px; height: 42px; border: none; border-radius: 8px; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .12s; }
   .kp:hover { background: var(--accent-soft); }
-  .pri { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 9px; padding: 15px; font-family: var(--ui); font-weight: 600; font-size: 16px; cursor: pointer; }
+  .pri { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 9px; padding: 13px; font-family: var(--ui); font-weight: 600; font-size: 15px; cursor: pointer; }
   .sec-act { display: block; width: 100%; text-align: center; background: none; border: none; color: var(--muted); font-family: var(--ui); font-weight: 600; font-size: 13.5px; padding: 11px 0 2px; cursor: pointer; }
 
   /* drill-in dropdown + slots */
@@ -265,12 +279,12 @@
      DASHBOARD VOCABULARY (dashboard mockups) — used by Phase C+ screens.
      ==================================================================== */
   /* flat hairline overview; only the liability cell is the dark money block */
-  .ov { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); margin-bottom: 18px; overflow: hidden; max-width: 100%; }
-  .ov .cell { padding: 22px 24px; border-right: 1px solid var(--line); min-width: 0; }
+  .ov { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); margin-bottom: 14px; overflow: hidden; max-width: 100%; }
+  .ov .cell { padding: 15px 18px; border-right: 1px solid var(--line); min-width: 0; }
   .ov .cell:last-child { border-right: none; }
   .ov .cell .v { overflow: hidden; text-overflow: ellipsis; }
-  .ov .cell .l { font-family: var(--ui); font-size: 12.5px; font-weight: 500; color: var(--muted); }
-  .ov .cell .v { font-weight: 800; font-size: 30px; margin-top: 12px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+  .ov .cell .l { font-family: var(--ui); font-size: 11px; font-weight: 500; color: var(--muted); }
+  .ov .cell .v { font-weight: 800; font-size: 22px; margin-top: 7px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
   .ov .cell .v.credit { color: var(--accent); }
   .ov .cell.liab { background: var(--ink); }
   .ov .cell.liab .l { color: #9aa6b4; }
@@ -282,16 +296,16 @@
   .store-redeem-btn { background: #374656; }
 
   /* the reusable dark money block (balance / liability hero) */
-  .moneyblock { background: var(--ink); border-radius: 10px; padding: 22px 24px; color: #fff; }
-  .moneyblock .l { font-family: var(--ui); font-size: 12.5px; font-weight: 500; color: #9aa6b4; }
-  .moneyblock .v { font-weight: 800; font-size: 30px; margin-top: 12px; font-variant-numeric: tabular-nums; }
+  .moneyblock { background: var(--ink); border-radius: 10px; padding: 16px 18px; color: #fff; }
+  .moneyblock .l { font-family: var(--ui); font-size: 11px; font-weight: 500; color: #9aa6b4; }
+  .moneyblock .v { font-weight: 800; font-size: 23px; margin-top: 6px; font-variant-numeric: tabular-nums; }
 
-  /* avatar */
-  .av { width: 34px; height: 34px; border-radius: 7px; background: var(--accent-soft); color: var(--accent); font-family: var(--ui); font-weight: 600; font-size: 12px; display: flex; align-items: center; justify-content: center; flex: none; }
+  /* avatar — one neutral tone */
+  .av { width: 32px; height: 32px; border-radius: 8px; background: var(--surface2); color: var(--ink-soft); font-family: var(--ui); font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; flex: none; }
 
   /* ---- numeric keypad (money entry, store mode) ----------------------- */
   .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .keypad button { font-family: var(--ui); font-size: 20px; font-weight: 600; color: var(--ink); background: var(--surface2); border: none; border-radius: 9px; padding: 16px 0; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .keypad button { font-family: var(--ui); font-size: 18px; font-weight: 600; color: var(--ink); background: var(--surface2); border: none; border-radius: 9px; padding: 14px 0; cursor: pointer; font-variant-numeric: tabular-nums; }
   .keypad button:active { background: var(--accent-soft); }
 }
 
@@ -304,6 +318,14 @@
   .ov { grid-template-columns: 1fr; }
   .ov .cell { border-right: none; border-bottom: 1px solid var(--line); }
   .ov .cell:last-child { border-bottom: none; }
+}
+
+/* Touch / mobile: density targets desktop — restore comfortable tap targets so
+   nothing here is cramped or hard to hit (≥44px), same components. */
+@media (pointer: coarse) {
+  .field input, .field select, .finp { min-height: 44px; }
+  .btn, .chip, .seg button, .cat, .tabs button, .tabs a, .kp { min-height: 44px; }
+  .chip, .seg button, .tabs button, .tabs a { display: inline-flex; align-items: center; }
 }
 
 /* Wide tables reflow into stacked cards on narrow viewports: hide the header,

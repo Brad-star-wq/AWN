@@ -42,7 +42,7 @@ export function StoreRedeem({ customer }: { customer: CustomerPick }) {
         </div>
         <div style={{ fontFamily: 'var(--ui)', fontWeight: 600, fontSize: 18, marginTop: 6 }}>Redeemed {formatCents(done.amountCents)}</div>
         <div className="sub">{customer.displayName}’s balance is now</div>
-        <div className="num" style={{ fontSize: 34, fontWeight: 800, color: 'var(--accent)' }}>{formatCents(done.balanceCents)}</div>
+        <div className="num" style={{ fontSize: 26, fontWeight: 800, color: 'var(--accent)' }}>{formatCents(done.balanceCents)}</div>
         <div className="instruction" style={{ maxWidth: 320, marginTop: 16, textAlign: 'left' }}>
           On Square, ring this sale and take <b>{formatCents(done.amountCents)}</b> as the <b>“Other Gift Card or Certificate”</b> (Store Credit) tender.
         </div>
