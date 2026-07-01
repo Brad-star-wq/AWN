@@ -29,6 +29,16 @@ export function AttributionInbox({
   const [assigning, setAssigning] = useState<RedemptionQueueItem | null>(null);
 
   const count = items.length;
+  // A redemption rung on Square but left unassigned too long is a gentle watch
+  // state (mirrors the engine's UNASSIGNED_TOO_LONG_MS = 30 min).
+  const AGING_MS = 30 * 60 * 1000;
+  const agingCount = items.filter((it) => Date.now() - Date.parse(it.createdAt) > AGING_MS).length;
+
+  function waited(iso: string): { aging: boolean; label: string } {
+    const m = Math.floor((Date.now() - Date.parse(iso)) / 60000);
+    const label = m < 1 ? 'just now' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`;
+    return { aging: Date.now() - Date.parse(iso) > AGING_MS, label };
+  }
 
   function onAssigned() {
     setAssigning(null);
@@ -38,20 +48,27 @@ export function AttributionInbox({
   const list =
     count === 0 ? null : (
       <div className="rowlist" style={{ marginTop: 10 }}>
-        {items.map((it) => (
-          <div key={it.id} className="row" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span className="num" style={{ fontWeight: 800, color: 'var(--accent)', minWidth: 72 }}>
-              {formatCents(it.amountCents)}
-            </span>
-            <span className="sub" style={{ flex: 1 }}>
-              {activityTime(it.createdAt)}
-              {it.locationId ? ` · ${it.locationId}` : ''}
-            </span>
-            <button className="pri" style={{ width: 'auto', padding: '8px 14px' }} onClick={() => setAssigning(it)}>
-              Assign to customer
-            </button>
-          </div>
-        ))}
+        {items.map((it) => {
+          const w = waited(it.createdAt);
+          return (
+            <div key={it.id} className="row" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span className="num" style={{ fontWeight: 800, color: 'var(--accent)', minWidth: 72 }}>
+                {formatCents(it.amountCents)}
+              </span>
+              <span className="sub" style={{ flex: 1 }}>
+                {activityTime(it.createdAt)}
+                {it.locationId ? ` · ${it.locationId}` : ''}
+                {' · '}
+                <span style={w.aging ? { color: 'var(--warn)', fontWeight: 600 } : undefined}>
+                  waiting {w.label}
+                </span>
+              </span>
+              <button className="pri" style={{ width: 'auto', padding: '8px 14px' }} onClick={() => setAssigning(it)}>
+                Assign to customer
+              </button>
+            </div>
+          );
+        })}
       </div>
     );
 
@@ -92,7 +109,13 @@ export function AttributionInbox({
         <span style={{ fontFamily: 'var(--ui)', fontWeight: 800, fontSize: 15 }}>
           {count} redemption{count === 1 ? '' : 's'} to assign
         </span>
-        <span className="sub" style={{ marginLeft: 6 }}>rung on Square — tap to assign a customer</span>
+        {agingCount > 0 ? (
+          <span style={{ marginLeft: 6, fontSize: 12.5, fontWeight: 600, color: 'var(--warn)' }}>
+            · {agingCount} waiting &gt;30m
+          </span>
+        ) : (
+          <span className="sub" style={{ marginLeft: 6 }}>rung on Square — tap to assign a customer</span>
+        )}
         <span style={{ marginLeft: 'auto' }}>{open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}</span>
       </button>
       {open && list}

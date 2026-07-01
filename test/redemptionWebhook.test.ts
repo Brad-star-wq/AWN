@@ -131,6 +131,19 @@ test('refund: reverses the linked redemption and flips the row to reversed', asy
   assert.equal(row?.status, 'reversed');
 });
 
+test('a non-COMPLETED refund is ignored and returns no credit (failed-refund edge)', async () => {
+  const { ledger, deps } = setup();
+  await ledger.issueCredit({ customerId: 'cust_1', amountCents: 5000 });
+  await deps.pendings.create({ customerId: 'cust_1', amountCents: 2000, locationId: LOC, createdAt: T });
+  await processRedemptionEvent(paymentEvent({}), deps); // auto-attribute → 3000
+  assert.equal(await ledger.getBalance('cust_1'), 3000);
+
+  // A refund that goes PENDING (and may later FAIL) must not return credit.
+  const res = await processRedemptionEvent(refundEvent({ status: 'PENDING' }), deps);
+  assert.equal(res.kind, 'IGNORED');
+  assert.equal(await ledger.getBalance('cust_1'), 3000);
+});
+
 test('refund for a payment with no redemption surfaces REFUND_NO_REDEMPTION', async () => {
   const { deps } = setup();
   const res = await processRedemptionEvent(refundEvent({ paymentId: 'sqpay_unknown' }), deps);

@@ -53,6 +53,8 @@ export interface TodaySnapshot {
   outstandingLiabilityCents: number;
   draftsToFinish: number;
   needsAttentionCount: number;
+  /** Redemptions rung on Square but not yet assigned past the watch threshold. */
+  unassignedTooLongCount: number;
   recent: ActivityRow[];
 }
 

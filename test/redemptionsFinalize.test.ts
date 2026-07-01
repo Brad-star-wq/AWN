@@ -7,8 +7,10 @@ import { InMemoryRedemptionRepository } from '../src/adapters/inMemoryRedemption
 import {
   finalizeRedemption,
   reassignRedemption,
+  findUnassignedTooLong,
   type FinalizeDeps,
 } from '../src/domain/redemptions';
+import type { RedemptionStatus } from '../src/ports/redemptionRepository';
 
 const ORIGIN = 'square_pos_other_tender' as const;
 
@@ -109,6 +111,17 @@ test('finalizeRedemption: over-balance with allowNegative finalizes and flags th
   const finalized = await redemptions.getById(row.id);
   assert.equal(finalized?.status, 'finalized');
   assert.deepEqual(finalized?.flags, { negative_balance: true });
+});
+
+test('findUnassignedTooLong: only awaiting rows older than the threshold surface', () => {
+  const asOf = '2026-07-01T12:00:00.000Z';
+  const rows: { id: string; status: RedemptionStatus; createdAt: string }[] = [
+    { id: 'old', status: 'awaiting_attribution', createdAt: '2026-07-01T11:00:00.000Z' }, // 60m
+    { id: 'fresh', status: 'awaiting_attribution', createdAt: '2026-07-01T11:59:00.000Z' }, // 1m
+    { id: 'finalized', status: 'finalized', createdAt: '2026-07-01T09:00:00.000Z' }, // not awaiting
+  ];
+  const out = findUnassignedTooLong(rows, asOf, 30 * 60 * 1000);
+  assert.deepEqual(out.map((r) => r.id), ['old']);
 });
 
 test('reassignRedemption: reverses the wrong customer and re-draws the corrected one (attempt-scoped key)', async () => {

@@ -45,6 +45,12 @@ export default async function TodayPage() {
         <ArrowRight size={15} strokeWidth={2} className="text-muted" />
       </Link>
 
+      {t.unassignedTooLongCount > 0 && (
+        <p className="mb-[26px] px-1 font-display text-[13px] font-medium text-warn">
+          {t.unassignedTooLongCount} redemption{t.unassignedTooLongCount === 1 ? '' : 's'} rung on Square {t.unassignedTooLongCount === 1 ? 'is' : 'are'} still waiting to be assigned (30 min+).
+        </p>
+      )}
+
       <div className="mb-2 font-display text-[13px] font-semibold text-ink-soft">Recent activity</div>
       <div className="card overflow-hidden">
         {t.recent.length === 0 ? (

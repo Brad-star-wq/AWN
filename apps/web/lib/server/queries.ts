@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { LedgerEntry, DraftProduct, Customer } from '@engine/domain/types';
 import { reconcileDay } from '@engine/domain/reconciliation';
+import { findUnassignedTooLong } from '@engine/domain/redemptions';
 import { engine } from './engine';
 import { requireOwner } from './auth';
 import { draftTitle } from '@/lib/format';
@@ -96,6 +97,10 @@ export async function getToday(): Promise<TodaySnapshot> {
   const report = await reconcileDay([], engine.ledgerRepo);
   const recentEntries = await engine.ledgerRepo.listEntries({ limit: 8 });
 
+  // Watch state (Phase F): redemptions rung on Square but left unassigned too long.
+  const awaiting = await engine.redemptions.listAwaitingAttribution();
+  const unassignedTooLongCount = findUnassignedTooLong(awaiting, new Date().toISOString()).length;
+
   return {
     givenTodayCents,
     usedTodayCents,
@@ -103,6 +108,7 @@ export async function getToday(): Promise<TodaySnapshot> {
     outstandingLiabilityCents: report.totals.outstandingLiabilityCents,
     draftsToFinish: openDrafts.length,
     needsAttentionCount: report.unmatched.length + report.negativeBalances.length,
+    unassignedTooLongCount,
     recent: recentEntries.map((e) => {
       const row = toActivityRow(e, names);
       const items = e.sourceRef ? byTxn.get(e.sourceRef) : undefined;

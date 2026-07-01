@@ -3,6 +3,7 @@ import {
   Redemption,
   RedemptionOrigin,
   RedemptionRepository,
+  RedemptionStatus,
 } from '../ports/redemptionRepository';
 
 /**
@@ -175,6 +176,37 @@ export async function reverseRedemptionForRefund(
   });
   await deps.redemptions.markReversed(redemption.id);
   return entry;
+}
+
+// ---- Watch states (Phase F) ------------------------------------------------
+
+/**
+ * How long an unattributed redemption may sit before it's a gentle watch state:
+ * the owner rang credit on Square but never told the app *who*. Replaces the old
+ * STALE/NO_PENDING alerts as the meaningful thing to surface. Documented default.
+ */
+export const UNASSIGNED_TOO_LONG_MS = 30 * 60 * 1000;
+
+type Ageable = { status: RedemptionStatus; createdAt: string };
+
+export function isUnassignedTooLong(
+  row: Ageable,
+  asOfIso: string,
+  thresholdMs: number = UNASSIGNED_TOO_LONG_MS,
+): boolean {
+  return (
+    row.status === 'awaiting_attribution' &&
+    Date.parse(asOfIso) - Date.parse(row.createdAt) > thresholdMs
+  );
+}
+
+/** Unattributed redemptions that have waited past the threshold. Pure. */
+export function findUnassignedTooLong<T extends Ageable>(
+  rows: T[],
+  asOfIso: string,
+  thresholdMs: number = UNASSIGNED_TOO_LONG_MS,
+): T[] {
+  return rows.filter((r) => isUnassignedTooLong(r, asOfIso, thresholdMs));
 }
 
 /**
