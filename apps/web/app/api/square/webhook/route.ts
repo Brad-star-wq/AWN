@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySquareWebhookSignature } from '@engine/adapters/square/webhookSignature';
-import { processSquareEvent } from '@engine/adapters/square/dispatch';
+import { processRedemptionEvent } from '@engine/adapters/square/redemptionWebhook';
 import {
   PgPendingRedemptionStore,
   PgWebhookEventStore,
@@ -19,10 +19,12 @@ import { engine } from '@/lib/server/engine';
  * `force-dynamic` because every webhook delivery must be processed live; there
  * is nothing to cache or statically render.
  *
- * Flow: fail-closed signature verify → parse → dedupe + reconcile/refund inline
- * → fast 2xx. Processing is idempotent (DB unique on event_id, ledger unique on
- * the Square payment/refund id), so it is safe to run inline before acking; a
- * 5xx only escapes on a real (transient) failure, which Square will retry.
+ * Flow: fail-closed signature verify → parse → v2 attribute-on-arrival handler
+ * inline → fast 2xx. A COMPLETED OTHER-tender payment creates an unattributed
+ * `redemptions` row (a human assigns it later); refunds reverse the linked row.
+ * Processing is idempotent (DB unique on event_id, unique on square_payment_id,
+ * ledger unique on the payment/refund id), so it is safe to run inline before
+ * acking; a 5xx only escapes on a real (transient) failure, which Square retries.
  */
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -60,20 +62,21 @@ export async function POST(request: NextRequest) {
     return new NextResponse('Malformed JSON', { status: 400 });
   }
 
-  // Dispatch to the tested matcher / refund logic against the pg-backed stores,
-  // sharing the engine's pooler connection. Idempotent, so running inline is
-  // safe; a thrown error becomes a 5xx and Square retries.
+  // v2 attribute-on-arrival, against the pg-backed stores, sharing the engine's
+  // pooler connection. Idempotent, so running inline is safe; a thrown error
+  // becomes a 5xx and Square retries. The legacy pending store is passed only as
+  // the OPTIONAL auto-attribution fast path + refund fallback (flagged for
+  // retirement) — nothing new is built on it.
   try {
-    const result = await processSquareEvent(event, {
-      pendings: new PgPendingRedemptionStore(engine.sql),
+    const result = await processRedemptionEvent(event, {
+      redemptions: engine.redemptions,
       events: new PgWebhookEventStore(engine.sql),
-      alerts: new PgAlertStore(engine.sql),
       ledger: engine.ledger,
+      pendings: new PgPendingRedemptionStore(engine.sql),
+      alerts: new PgAlertStore(engine.sql),
     });
     const summary =
-      result.kind === 'IGNORED'
-        ? `IGNORED(${result.reason})`
-        : `${result.kind}:${result.outcome.kind}`;
+      result.kind === 'IGNORED' ? `IGNORED(${result.reason})` : result.kind;
     console.log(`[square-webhook] ${event.type ?? '(no type)'} ${event.event_id ?? ''} → ${summary}`);
   } catch (err) {
     console.error('[square-webhook] processing failed', err);
