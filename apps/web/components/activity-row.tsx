@@ -1,5 +1,6 @@
 import { formatCents } from '@/lib/money';
 import { activityTime } from '@/lib/format';
+import { ReassignButton } from '@/components/redemptions/reassign-button';
 import type { ActivityRow } from '@/lib/types';
 
 const LABEL: Record<ActivityRow['kind'], string> = {
@@ -31,6 +32,12 @@ export function ActivityRowView({
           </>
         ) : null}
         {showDetail && row.note ? <span className="sub"> · {row.note}</span> : null}
+        {row.redemptionId ? (
+          <>
+            {' · '}
+            <ReassignButton redemptionId={row.redemptionId} />
+          </>
+        ) : null}
       </span>
       <span className={`amt ${neg ? 'neg' : 'pos'}`}>
         {neg ? '– ' : '+ '}

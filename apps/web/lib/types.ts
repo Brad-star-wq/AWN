@@ -16,6 +16,8 @@ export interface ActivityRow {
   sourceRef?: string;
   /** Items the customer brought in on this transaction (ISSUE rows). */
   addedItems?: { title: string; itemType: ItemType }[];
+  /** Set when this REDEEM finalized a v2 redemption — enables "Reassign". */
+  redemptionId?: string;
 }
 
 export interface CustomerRow {

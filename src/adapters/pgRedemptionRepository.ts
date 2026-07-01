@@ -87,6 +87,14 @@ export class PgRedemptionRepository implements RedemptionRepository {
     return rows.map(toRedemption);
   }
 
+  async listByCustomer(customerId: string): Promise<Redemption[]> {
+    const rows = await this.sql`
+      select * from redemptions where customer_id = ${customerId}::uuid
+       order by created_at desc
+    `;
+    return rows.map(toRedemption);
+  }
+
   async markFinalized(id: string, update: FinalizeUpdate): Promise<Redemption> {
     const flags = update.negativeBalance ? this.sql.json({ negative_balance: true }) : null;
     const [row] = await this.sql`

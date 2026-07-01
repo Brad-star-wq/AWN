@@ -69,6 +69,8 @@ export interface RedemptionRepository {
   getByPaymentId(squarePaymentId: string): Promise<Redemption | null>;
   /** The attribution queue: rows still awaiting a human, newest first. */
   listAwaitingAttribution(): Promise<Redemption[]>;
+  /** Every redemption attributed to a customer (used to offer Reassign). */
+  listByCustomer(customerId: string): Promise<Redemption[]>;
   /** Link the ledger entry, set the customer, flip status → finalized. */
   markFinalized(id: string, update: FinalizeUpdate): Promise<Redemption>;
   /** Refund path: flip a finalized row → reversed. */

@@ -11,7 +11,7 @@ import { SquareCatalogAdapter } from '@engine/adapters/square/squareCatalog';
 import { engine } from '@/lib/server/engine';
 import { requireOwner } from '@/lib/server/auth';
 import { searchCustomers, getAttributionQueue } from '@/lib/server/queries';
-import { finalizeRedemption } from '@/lib/server/redemptions/finalize';
+import { finalizeRedemption, reassignRedemption } from '@/lib/server/redemptions/finalize';
 import type { CustomerPick, ItemType, RedemptionQueueItem } from '@/lib/types';
 
 /** Client-callable wrapper for the customer typeahead (intake / redeem). */
@@ -363,6 +363,27 @@ export async function attributeRedemption(input: {
   revalidatePath('/store');
   revalidatePath(`/customers/${customerId}`);
   return { ok: true, balanceCents, negativeBalance: res.negativeBalance };
+}
+
+/**
+ * Reassign a wrong-customer redemption: append a reversal to the wrongly-charged
+ * customer and return the row to the attribution queue (so the right customer
+ * can be assigned). Append-only — the original REDEEM is never edited or deleted.
+ */
+export async function reassignRedemptionAction(
+  redemptionId: string,
+): Promise<ActionResult<{ requeued: true }>> {
+  await requireOwner();
+  const before = await engine.redemptions.getById(redemptionId);
+  try {
+    await reassignRedemption(redemptionId);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Could not reassign.' };
+  }
+  refreshAll();
+  revalidatePath('/store');
+  if (before?.customerId) revalidatePath(`/customers/${before.customerId}`);
+  return { ok: true, requeued: true };
 }
 
 export async function adjustCredit(input: {

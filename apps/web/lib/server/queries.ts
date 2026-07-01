@@ -179,11 +179,19 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetailData 
   if (!customer) return null;
 
   const names = await customerNameMap();
-  const [balanceCents, entries, drafts] = await Promise.all([
+  const [balanceCents, entries, drafts, reds] = await Promise.all([
     engine.ledger.getBalance(id),
     engine.ledgerRepo.listEntries({ customerId: id }),
     engine.draftRepo.list({ sourceCustomerId: id }),
+    engine.redemptions.listByCustomer(id),
   ]);
+
+  // Map each finalized redemption's ledger entry → its redemption id, so a REDEEM
+  // in the history can offer "Reassign" (wrong-customer fix).
+  const redemptionByEntry = new Map<string, string>();
+  for (const r of reds) {
+    if (r.status === 'finalized' && r.ledgerEntryId) redemptionByEntry.set(r.ledgerEntryId, r.id);
+  }
 
   // Items grouped by the transaction that took them in — the non-negotiable,
   // read entirely from our own tables. We join the credit-issue entry by its
@@ -224,7 +232,12 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetailData 
     ...(customer.phone !== undefined ? { phone: customer.phone } : {}),
     balanceCents,
     ...(firstSeen ? { memberSinceIso: firstSeen } : {}),
-    history: entries.map((e) => toActivityRow(e, names)),
+    history: entries.map((e) => {
+      const row = toActivityRow(e, names);
+      const redemptionId = redemptionByEntry.get(e.id);
+      if (redemptionId) row.redemptionId = redemptionId;
+      return row;
+    }),
     transactions,
   };
 }

@@ -65,6 +65,13 @@ export class InMemoryRedemptionRepository implements RedemptionRepository {
       .map((r) => ({ ...r }));
   }
 
+  async listByCustomer(customerId: string): Promise<Redemption[]> {
+    return [...this.rows.values()]
+      .filter((r) => r.customerId === customerId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map((r) => ({ ...r }));
+  }
+
   async markFinalized(id: string, update: FinalizeUpdate): Promise<Redemption> {
     const row = this.rows.get(id);
     if (!row) throw new Error(`Unknown redemption ${id}`);
