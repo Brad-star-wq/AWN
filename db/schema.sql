@@ -151,3 +151,31 @@ create table reconciliation_alerts (
 );
 create index reconciliation_alerts_open_idx
   on reconciliation_alerts (created_at) where resolved_at is null;
+
+-- ---- Redemptions (v2, attribute-on-arrival) ----------------
+-- One record type for a redemption from either origin. See db/redemptions.sql
+-- for the full rationale; kept here so a fresh `db:setup` provisions it too.
+-- Distinct from pending_redemptions (kept only as a legacy fast path).
+create type redemption_origin as enum ('square_pos_other_tender', 'app_external_payment');
+create type redemption_status as enum
+  ('awaiting_attribution', 'finalized', 'reversed', 'void');
+
+create table redemptions (
+  id                  uuid primary key default gen_random_uuid(),
+  customer_id         uuid references customers(id),               -- null until attributed
+  amount_cents        bigint not null check (amount_cents > 0),    -- integer cents
+  location_id         text,
+  square_payment_id   text unique,                                 -- one payment → one redemption
+  square_order_id     text,                                        -- null for idea 1; set for idea 2
+  origin              redemption_origin not null,
+  status              redemption_status not null default 'awaiting_attribution',
+  ledger_entry_id     uuid references credit_ledger(id),           -- set on finalize
+  flags               jsonb,                                       -- e.g. {"negative_balance": true}
+  attribution_attempt integer not null default 1,                  -- namespaces the redeem idempotency key across reassigns
+  created_at          timestamptz not null default now(),
+  finalized_at        timestamptz,
+  updated_at          timestamptz not null default now()
+);
+create index redemptions_status_idx on redemptions (status);
+create index redemptions_awaiting_idx
+  on redemptions (created_at) where status = 'awaiting_attribution';
