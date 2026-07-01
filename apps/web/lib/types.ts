@@ -112,3 +112,12 @@ export interface CustomerPick {
   phone?: string;
   balanceCents: number;
 }
+
+/** An unattributed redemption in the live attribution queue (v2). */
+export interface RedemptionQueueItem {
+  id: string;
+  amountCents: number;
+  locationId: string | null;
+  squarePaymentId: string | null;
+  createdAt: string;
+}

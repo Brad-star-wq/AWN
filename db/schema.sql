@@ -179,3 +179,15 @@ create table redemptions (
 create index redemptions_status_idx on redemptions (status);
 create index redemptions_awaiting_idx
   on redemptions (created_at) where status = 'awaiting_attribution';
+-- Live attribution queue (Phase D): publish row changes to Supabase Realtime.
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+     and not exists (
+       select 1 from pg_publication_tables
+       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'redemptions'
+     )
+  then
+    execute 'alter publication supabase_realtime add table redemptions';
+  end if;
+end$$;

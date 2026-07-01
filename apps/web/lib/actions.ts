@@ -10,8 +10,9 @@ import { squareClientFromEnv } from '@engine/adapters/square/squareClient';
 import { SquareCatalogAdapter } from '@engine/adapters/square/squareCatalog';
 import { engine } from '@/lib/server/engine';
 import { requireOwner } from '@/lib/server/auth';
-import { searchCustomers } from '@/lib/server/queries';
-import type { CustomerPick, ItemType } from '@/lib/types';
+import { searchCustomers, getAttributionQueue } from '@/lib/server/queries';
+import { finalizeRedemption } from '@/lib/server/redemptions/finalize';
+import type { CustomerPick, ItemType, RedemptionQueueItem } from '@/lib/types';
 
 /** Client-callable wrapper for the customer typeahead (intake / redeem). */
 export async function searchCustomersAction(query: string): Promise<CustomerPick[]> {
@@ -296,6 +297,72 @@ export async function redeemCredit(input: {
   refreshAll();
   revalidatePath(`/customers/${input.customerId}`);
   return { ok: true, balanceCents };
+}
+
+// ---- Redemptions (v2, attribute-on-arrival) --------------------------------
+
+/** Poll fallback for the live attribution queue when Realtime isn't delivering. */
+export async function getAttributionQueueAction(): Promise<RedemptionQueueItem[]> {
+  return getAttributionQueue();
+}
+
+/**
+ * Assign an unattributed redemption to a customer and finalize it (Phase E's
+ * action, surfaced from the Phase D queue). Origin-agnostic: it just resolves
+ * the customer and calls the shared `finalizeRedemption` spine. Over-balance
+ * returns `needsConfirm` (the UI shows the available credit and asks); resend
+ * with `confirmNegative` to finalize with a `negative_balance` flag.
+ *
+ * We follow the app's Server-Action idiom rather than a REST route (every other
+ * mutation here is a Server Action) — same authenticated, revalidating path.
+ */
+export async function attributeRedemption(input: {
+  redemptionId: string;
+  customerId?: string;
+  displayName?: string;
+  phone?: string;
+  confirmNegative?: boolean;
+}): Promise<
+  ActionResult<
+    | { balanceCents: number; negativeBalance: boolean }
+    | { needsConfirm: true; available: number }
+  >
+> {
+  await requireOwner();
+
+  const row = await engine.redemptions.getById(input.redemptionId);
+  if (!row) return { ok: false, error: 'Redemption not found.' };
+  if (row.status !== 'awaiting_attribution') {
+    return { ok: false, error: 'This redemption is no longer awaiting assignment.' };
+  }
+
+  // Resolve the customer — an existing id, or a new customer by name (+ phone).
+  let customerId = input.customerId;
+  if (!customerId) {
+    const name = input.displayName?.trim();
+    if (!name) return { ok: false, error: 'Pick a customer or enter a name.' };
+    const phone = input.phone?.trim();
+    const existing = phone ? await engine.customers.findByPhone(phone) : null;
+    const customer = existing ?? (await engine.customers.create({ displayName: name, ...(phone ? { phone } : {}) }));
+    customerId = customer.id;
+  }
+
+  const res = await finalizeRedemption({
+    redemptionId: row.id,
+    customerId,
+    amountCents: row.amountCents,
+    squarePaymentId: row.squarePaymentId,
+    origin: row.origin,
+    allowNegative: !!input.confirmNegative,
+  });
+
+  if (!res.ok) return { ok: true, needsConfirm: true, available: res.available };
+
+  const balanceCents = await engine.ledger.getBalance(customerId);
+  refreshAll();
+  revalidatePath('/store');
+  revalidatePath(`/customers/${customerId}`);
+  return { ok: true, balanceCents, negativeBalance: res.negativeBalance };
 }
 
 export async function adjustCredit(input: {

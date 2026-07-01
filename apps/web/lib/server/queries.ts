@@ -12,6 +12,7 @@ import type {
   CustomerRow,
   DraftRow,
   EodSnapshot,
+  RedemptionQueueItem,
   TodaySnapshot,
   TxnGroup,
   TxnItem,
@@ -287,6 +288,22 @@ export async function searchCustomers(query: string): Promise<CustomerPick[]> {
     })),
   );
   return picks.sort((a, b) => a.displayName.localeCompare(b.displayName));
+}
+
+/**
+ * The live attribution queue (Phase D): redemptions awaiting a human, newest
+ * first. customer_id is null here by definition — the owner assigns it.
+ */
+export async function getAttributionQueue(): Promise<RedemptionQueueItem[]> {
+  await requireOwner();
+  const rows = await engine.redemptions.listAwaitingAttribution();
+  return rows.map((r) => ({
+    id: r.id,
+    amountCents: r.amountCents,
+    locationId: r.locationId,
+    squarePaymentId: r.squarePaymentId,
+    createdAt: r.createdAt,
+  }));
 }
 
 export async function getCustomerPick(id: string): Promise<CustomerPick | null> {

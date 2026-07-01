@@ -65,3 +65,18 @@ create index if not exists redemptions_status_idx on redemptions (status);
 create index if not exists redemptions_awaiting_idx
   on redemptions (created_at)
   where status = 'awaiting_attribution';
+
+-- Live attribution queue (Phase D): publish row changes to Supabase Realtime so
+-- the dashboard/in-store queue updates without a refresh. Guarded + idempotent;
+-- a poll fallback covers any environment where Realtime isn't wired.
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+     and not exists (
+       select 1 from pg_publication_tables
+       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'redemptions'
+     )
+  then
+    execute 'alter publication supabase_realtime add table redemptions';
+  end if;
+end$$;

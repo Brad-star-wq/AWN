@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { Files, ArrowRight } from 'lucide-react';
-import { getToday } from '@/lib/server/queries';
+import { getToday, getAttributionQueue } from '@/lib/server/queries';
 import { dateTimeLong, activityTime, itemEmoji } from '@/lib/format';
 import { formatCentsShort, formatCents } from '@/lib/money';
 import { DashHeader } from '@/components/shell/dash-header';
+import { AttributionInbox } from '@/components/redemptions/attribution-inbox';
 import { Avatar } from '@/components/ui/avatar';
 import type { ActivityRow } from '@/lib/types';
 
@@ -21,11 +22,14 @@ const ACTIVITY_LABEL: Record<ActivityRow['kind'], string> = {
 };
 
 export default async function TodayPage() {
-  const t = await getToday();
+  const [t, queue] = await Promise.all([getToday(), getAttributionQueue()]);
 
   return (
     <div className="mx-auto w-full max-w-[1080px] px-4 py-7 md:px-12 md:pb-14 md:pt-10">
       <DashHeader eyebrow="Dashboard" title="Today" sub={dateTimeLong()} />
+
+      {/* Live "redemptions to assign" queue — attribute-on-arrival (v2). */}
+      <AttributionInbox initial={queue} variant="banner" />
 
       {/* Flat hairline overview — only the liability cell is the dark money block. */}
       <div className="ov">
