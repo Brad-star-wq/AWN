@@ -4,6 +4,7 @@ import { createSql } from '@engine/adapters/pg/client';
 import { PgCustomerRepository } from '@engine/adapters/pgCustomerRepository';
 import { PgLedgerRepository } from '@engine/adapters/pgLedgerRepository';
 import { PgDraftRepository } from '@engine/adapters/pgDraftRepository';
+import { PgRedemptionRepository } from '@engine/adapters/pgRedemptionRepository';
 import { Ledger } from '@engine/domain/ledger';
 import { Drafts } from '@engine/domain/drafts';
 import { MockPosAdapter } from '@engine/adapters/mockPosAdapter';
@@ -28,6 +29,9 @@ function build() {
     customers,
     ledgerRepo,
     draftRepo,
+    // The v2 attribute-on-arrival redemptions store (distinct from legacy
+    // pending_redemptions). The finalize spine and webhook write through it.
+    redemptions: new PgRedemptionRepository(sql),
     ledger: new Ledger(ledgerRepo),
     drafts: new Drafts(draftRepo),
     // Draft pushes go through the MOCK adapter until the Phase 5 Square adapter
