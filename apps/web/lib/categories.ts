@@ -34,3 +34,39 @@ export function categoryItemType(label: string): ItemType {
   if (label === 'Cards') return 'CARD';
   return 'OTHER';
 }
+
+// ---- Settings-driven intake options ---------------------------------------
+// The forms used to read the constants above directly. They now read an
+// `IntakeOptions` value (Settings-editable, persisted in the `intake_options`
+// table). The constants remain as the SEED/DEFAULT so nothing configured — or a
+// DB that isn't reachable — still yields today's exact lists.
+
+export interface CategoryOptions {
+  brands: string[];
+  conditions: string[];
+  sizes: string[];
+  colors: string[];
+}
+export interface IntakeOptions {
+  categories: string[];
+  byCategory: Record<string, CategoryOptions>;
+}
+
+/** The historical hardcoded lists, as an IntakeOptions value. The seed/fallback. */
+export function defaultIntakeOptions(): IntakeOptions {
+  const byCategory: Record<string, CategoryOptions> = {};
+  for (const cat of FINISH_CATEGORIES) {
+    const a = ADVANCED_OPTIONS[cat] ?? ADVANCED_OPTIONS.Other!;
+    byCategory[cat] = {
+      brands: [...a.brands],
+      conditions: [...a.conditions],
+      sizes: [...(a.sizes ?? [])],
+      colors: [...(a.colors ?? [])],
+    };
+  }
+  return { categories: [...FINISH_CATEGORIES], byCategory };
+}
+
+/** A safe empty option set for an unknown category (never undefined at a call site). */
+export const EMPTY_CATEGORY_OPTIONS: CategoryOptions = { brands: [], conditions: [], sizes: [], colors: [] };
+

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Zap } from 'lucide-react';
 import { requireOwner } from '@/lib/server/auth';
+import { getIntakeOptions } from '@/lib/server/intake-options';
 import { DashHeader } from '@/components/shell/dash-header';
 import { FinishIntakeForm } from '@/components/drafts/finish-intake-form';
 
@@ -11,6 +12,7 @@ export const dynamic = 'force-dynamic';
 // flow), is one tap away below.
 export default async function IntakePage() {
   await requireOwner();
+  const options = await getIntakeOptions();
   return (
     <div className="mx-auto w-full max-w-[1080px] px-4 py-7 md:px-12 md:pb-14 md:pt-10">
       <DashHeader eyebrow="Dashboard" title="New intake" sub="Take in one item with full detail" />
@@ -20,7 +22,7 @@ export default async function IntakePage() {
       >
         <Zap size={15} /> Quick intake — fast tap flow for multiple items →
       </Link>
-      <FinishIntakeForm asPage />
+      <FinishIntakeForm asPage options={options} />
     </div>
   );
 }

@@ -1,11 +1,11 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowUp, X, Check } from 'lucide-react';
-import { draftEdit, draftPush, draftSetOnline, intakeItemCreate } from '@/lib/actions';
+import { draftEdit, draftPush, draftSetOnline, intakeItemCreate, getIntakeOptionsAction } from '@/lib/actions';
 import { formatCents } from '@/lib/money';
-import { FINISH_CATEGORIES, ADVANCED_OPTIONS, categoryItemType } from '@/lib/categories';
+import { categoryItemType, defaultIntakeOptions, EMPTY_CATEGORY_OPTIONS, type IntakeOptions } from '@/lib/categories';
 import { FocusFlow } from '@/components/forms/focus-flow';
 import { ChipGroup, SegGroup } from '@/components/forms/button-group';
 import { MoneyField } from '@/components/forms/money-field';
@@ -20,10 +20,26 @@ const str = (v: unknown) => (typeof v === 'string' ? v : '');
 // the same array serves both intake (customer…payout present) and finish.
 const ORDER = ['customer', 'phone', 'cost', 'payout', 'category', 'brand', 'name', 'size-gender', 'size', 'condition', 'list', 'color', 'colorway', 'stylecode', 'desc', 'online', 'submit'];
 
-export function FinishIntakeForm({ draft, asPage = false, onClose }: { draft?: DraftRow; asPage?: boolean; onClose?: () => void }) {
+export function FinishIntakeForm({ draft, asPage = false, onClose, options }: { draft?: DraftRow; asPage?: boolean; onClose?: () => void; options?: IntakeOptions }) {
   const router = useRouter();
   const mode: 'intake' | 'finish' = draft ? 'finish' : 'intake';
   const a = draft?.attributes ?? {};
+
+  // Settings-driven pick-lists. When the caller passes `options` (the /intake
+  // page fetches them server-side) we render them directly — no flash. When it
+  // doesn't (the Drafts/Inventory finish modals), we start from the constants
+  // and fetch the live set on mount. Either way the constants are the fallback,
+  // so nothing configured behaves exactly as before.
+  const [optionSet, setOptionSet] = useState<IntakeOptions>(options ?? defaultIntakeOptions());
+  useEffect(() => {
+    if (options) {
+      setOptionSet(options);
+      return;
+    }
+    let live = true;
+    getIntakeOptionsAction().then((o) => { if (live) setOptionSet(o); });
+    return () => { live = false; };
+  }, [options]);
 
   const [sel, setSel] = useState<CustomerSelection>({ kind: 'none' });
   const [phone, setPhone] = useState('');
@@ -48,7 +64,7 @@ export function FinishIntakeForm({ draft, asPage = false, onClose }: { draft?: D
   const [savedBalance, setSavedBalance] = useState<number | null>(null);
   const [pending, start] = useTransition();
 
-  const opts = ADVANCED_OPTIONS[category] ?? ADVANCED_OPTIONS.Other!;
+  const opts = optionSet.byCategory[category] ?? optionSet.byCategory.Other ?? EMPTY_CATEGORY_OPTIONS;
   const cost = mode === 'intake' ? costCents : draft?.costCents ?? null;
   const marginPct = useMemo(() => (listCents == null || !cost || cost <= 0 ? null : ((listCents - cost) / cost) * 100), [listCents, cost]);
 
@@ -145,7 +161,7 @@ export function FinishIntakeForm({ draft, asPage = false, onClose }: { draft?: D
             </div>
           )}
 
-          <Field label="Category"><ChipGroup stopId="category" ariaLabel="Category" options={[...FINISH_CATEGORIES]} value={category} onSelect={setCategory} /></Field>
+          <Field label="Category"><ChipGroup stopId="category" ariaLabel="Category" options={optionSet.categories} value={category} onSelect={setCategory} /></Field>
           {opts.brands.length > 0 && <Field label="Brand"><ChipGroup stopId="brand" ariaLabel="Brand" options={opts.brands} value={brand} onSelect={(v) => setBrand(v === brand ? '' : v)} allowMore /></Field>}
           <Field label="Name"><input data-stop="name" enterKeyHint="next" className="finp" value={name} placeholder="e.g. Air Jordan 1 Retro High OG" onChange={(e) => setName(e.target.value)} /></Field>
           {opts.sizes && opts.sizes.length > 0 && (

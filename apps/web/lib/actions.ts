@@ -12,6 +12,13 @@ import { engine } from '@/lib/server/engine';
 import { requireOwner } from '@/lib/server/auth';
 import { searchCustomers, getAttributionQueue } from '@/lib/server/queries';
 import { finalizeRedemption, reassignRedemption } from '@/lib/server/redemptions/finalize';
+import {
+  getIntakeOptions,
+  addIntakeOption as addIntakeOptionDb,
+  removeIntakeOption as removeIntakeOptionDb,
+  isOptionKind,
+} from '@/lib/server/intake-options';
+import type { IntakeOptions } from '@/lib/categories';
 import type { CustomerPick, ItemType, RedemptionQueueItem } from '@/lib/types';
 
 /** Client-callable wrapper for the customer typeahead (intake / redeem). */
@@ -516,4 +523,55 @@ export async function draftsBulkPush(ids: string[]): Promise<ActionResult<{ push
   }
   refreshAll();
   return { ok: true, pushed };
+}
+
+// ---- Intake options (Settings CRUD) ---------------------------------------
+
+/** Client-callable read: the intake/finish forms load live options with this. */
+export async function getIntakeOptionsAction(): Promise<IntakeOptions> {
+  return getIntakeOptions();
+}
+
+function normalizeOption(kind: string, category: string, value: string):
+  | { error: string }
+  | { kind: 'category' | 'brand' | 'condition' | 'size' | 'color'; category: string; value: string } {
+  if (!isOptionKind(kind)) return { error: 'Unknown option list.' };
+  const v = value.trim();
+  if (!v) return { error: 'Enter a value.' };
+  const cat = kind === 'category' ? '' : category.trim();
+  if (kind !== 'category' && !cat) return { error: 'Missing category.' };
+  return { kind, category: cat, value: v };
+}
+
+function revalidateOptions() {
+  revalidatePath('/intake');
+  revalidatePath('/drafts');
+  revalidatePath('/inventory');
+  revalidatePath('/settings');
+}
+
+export async function addIntakeOptionAction(input: { kind: string; category?: string; value: string }): Promise<ActionResult> {
+  await requireOwner();
+  const n = normalizeOption(input.kind, input.category ?? '', input.value);
+  if ('error' in n) return { ok: false, error: n.error };
+  try {
+    await addIntakeOptionDb(n.kind, n.category, n.value);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Could not add option.' };
+  }
+  revalidateOptions();
+  return { ok: true };
+}
+
+export async function removeIntakeOptionAction(input: { kind: string; category?: string; value: string }): Promise<ActionResult> {
+  await requireOwner();
+  const n = normalizeOption(input.kind, input.category ?? '', input.value);
+  if ('error' in n) return { ok: false, error: n.error };
+  try {
+    await removeIntakeOptionDb(n.kind, n.category, n.value);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Could not remove option.' };
+  }
+  revalidateOptions();
+  return { ok: true };
 }

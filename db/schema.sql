@@ -191,3 +191,17 @@ begin
     execute 'alter publication supabase_realtime add table redemptions';
   end if;
 end$$;
+
+-- ---- intake_options -------------------------------------------------------
+-- Owner-editable pick-lists behind the intake/finish forms (Settings CRUD).
+-- App-layer presentation config, not engine data. See db/intake_options.sql for
+-- the full note; seeded from apps/web/lib/categories.ts constants on first read.
+create table if not exists intake_options (
+  id          uuid primary key default gen_random_uuid(),
+  kind        text not null check (kind in ('category', 'brand', 'condition', 'size', 'color')),
+  category    text not null default '',   -- '' for kind='category'; parent category otherwise
+  value       text not null,
+  created_at  timestamptz not null default now(),
+  unique (kind, category, value)
+);
+create index if not exists intake_options_kind_category_idx on intake_options (kind, category);

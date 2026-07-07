@@ -1,10 +1,13 @@
 import { requireOwner } from '@/lib/server/auth';
+import { getIntakeOptions } from '@/lib/server/intake-options';
 import { SignOut } from '@/components/sign-out';
 import { DashHeader } from '@/components/shell/dash-header';
 import { CategorySync } from '@/components/settings/category-sync';
+import { IntakeOptionsEditor } from '@/components/settings/intake-options-editor';
 
 export default async function SettingsPage() {
   const user = await requireOwner();
+  const intakeOptions = await getIntakeOptions();
 
   return (
     <div className="mx-auto w-full max-w-[1080px] px-4 py-7 md:px-12 md:pb-14 md:pt-10">
@@ -45,6 +48,8 @@ export default async function SettingsPage() {
       </div>
 
       <CategorySync />
+
+      <IntakeOptionsEditor initial={intakeOptions} />
 
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="pad" style={{ borderBottom: '1px solid var(--line)' }}>
