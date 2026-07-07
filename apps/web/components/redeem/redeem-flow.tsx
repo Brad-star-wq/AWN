@@ -34,6 +34,18 @@ export function RedeemFlow({ initial }: { initial: CustomerPick | null }) {
     }
   }
 
+  // "← Pick a different customer": reset the whole flow to a fresh picker.
+  // Root cause of the old glitch was leftover step state — the prior selection,
+  // the entered amount, and any success/error message all lingered. Clear them
+  // all so step 1 re-mounts a blank CustomerCombobox (empty search) every time.
+  function pickDifferent() {
+    setCustomer(null);
+    setSel({ kind: 'none' });
+    setCents(null);
+    setError(undefined);
+    setDone(undefined);
+  }
+
   // ----- Step 1: choose a customer -----
   if (!customer) {
     return (
@@ -95,7 +107,7 @@ export function RedeemFlow({ initial }: { initial: CustomerPick | null }) {
 
       <button
         type="button"
-        onClick={() => setCustomer(null)}
+        onClick={pickDifferent}
         className="mt-3 inline-flex items-center gap-1 rounded-[8px] px-[10px] py-[7px] font-display text-[13px] font-semibold text-ink-soft hover:bg-accent-soft"
       >
         ← Pick a different customer
