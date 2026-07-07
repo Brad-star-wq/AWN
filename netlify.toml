@@ -1,0 +1,31 @@
+# Netlify build configuration — version-controlled on purpose.
+#
+# This exists to prevent the stale-deploy class of bug: production once served
+# pre-Phase-C webhook code (the v1 `NO_PENDING` early-return) while origin/main
+# already had the fix. With the build config in the repo, base dir + build
+# command + the Next runtime can't silently drift from what's on main.
+#
+# Monorepo shape: this is an npm workspace. The engine is the ROOT package; the
+# Next.js app is apps/web and imports the engine's TypeScript source from the
+# repo root via the @engine/* alias + next.config `experimental.externalDir`.
+# `base` builds from apps/web, but Netlify checks out the whole repo, so the
+# ../../src engine source and the workspace install both resolve.
+
+[build]
+  # Build from the app package. Netlify runs install + command from here and,
+  # being workspace-aware, still installs the root workspace deps.
+  base = "apps/web"
+  command = "npm run build"
+
+# Official Next.js runtime — detects the app in `base` and wires SSR/ISR,
+# the webhook API route, and the publish dir. Do not set `publish` by hand;
+# the plugin manages it.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# NOTE: the *production branch* (main) is a Netlify UI setting
+# (Site configuration → Build & deploy → Continuous deployment → Production
+# branch), not something netlify.toml can declare. Set it to `main` there so
+# only main publishes to the production site. This block just scopes any
+# production-only build settings if we add them later.
+[context.production]
