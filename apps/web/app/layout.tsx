@@ -26,6 +26,21 @@ export const metadata: Metadata = {
   // Next auto-links /manifest.webmanifest from app/manifest.ts; naming it here is
   // explicit and harmless.
   manifest: '/manifest.webmanifest',
+  // Generated PNG icons (see app/pwa/*). `apple` drives the iOS home-screen icon.
+  icons: {
+    icon: [
+      { url: '/pwa/icon-192', sizes: '192x192', type: 'image/png' },
+      { url: '/pwa/icon-512', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/pwa/apple-icon', sizes: '180x180', type: 'image/png' }],
+  },
+  // iOS full-screen + custom title. Emits apple-mobile-web-app-capable=yes,
+  // apple-mobile-web-app-title, and apple-mobile-web-app-status-bar-style.
+  appleWebApp: {
+    capable: true,
+    title: 'AWN Resale',
+    statusBarStyle: 'default',
+  },
 };
 
 // themeColor lives on the viewport export in Next 14 — the ink token, so the
