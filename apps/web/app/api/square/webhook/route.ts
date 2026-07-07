@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySquareWebhookSignature } from '@engine/adapters/square/webhookSignature';
 import { processRedemptionEvent } from '@engine/adapters/square/redemptionWebhook';
-import {
-  PgPendingRedemptionStore,
-  PgWebhookEventStore,
-  PgAlertStore,
-} from '@engine/adapters/square/pgStores';
+import { PgWebhookEventStore, PgAlertStore } from '@engine/adapters/square/pgStores';
 import { engine } from '@/lib/server/engine';
 
 /**
@@ -62,17 +58,19 @@ export async function POST(request: NextRequest) {
     return new NextResponse('Malformed JSON', { status: 400 });
   }
 
-  // v2 attribute-on-arrival, against the pg-backed stores, sharing the engine's
-  // pooler connection. Idempotent, so running inline is safe; a thrown error
-  // becomes a 5xx and Square retries. The legacy pending store is passed only as
-  // the OPTIONAL auto-attribution fast path + refund fallback (flagged for
-  // retirement) — nothing new is built on it.
+  // Pure v2 attribute-on-arrival, against the pg-backed stores, sharing the
+  // engine's pooler connection. Idempotent, so running inline is safe; a thrown
+  // error becomes a 5xx and Square retries.
+  //
+  // The legacy pending_redemptions fast path (auto-attribution) + its refund
+  // fallback are RETIRED: we no longer pass `pendings`, so every COMPLETED
+  // OTHER-tender payment goes to awaiting_attribution for a human to assign.
+  // The pending_redemptions table is kept for now but nothing wires to it here.
   try {
     const result = await processRedemptionEvent(event, {
       redemptions: engine.redemptions,
       events: new PgWebhookEventStore(engine.sql),
       ledger: engine.ledger,
-      pendings: new PgPendingRedemptionStore(engine.sql),
       alerts: new PgAlertStore(engine.sql),
     });
     const summary =
