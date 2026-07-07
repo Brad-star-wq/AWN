@@ -2,13 +2,14 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, ArrowUp, X, Check } from 'lucide-react';
+import { ArrowUp, X, Check } from 'lucide-react';
 import { draftEdit, draftPush, draftSetOnline, intakeItemCreate } from '@/lib/actions';
 import { formatCents } from '@/lib/money';
 import { FINISH_CATEGORIES, ADVANCED_OPTIONS, categoryItemType } from '@/lib/categories';
 import { FocusFlow } from '@/components/forms/focus-flow';
 import { ChipGroup, SegGroup } from '@/components/forms/button-group';
 import { MoneyField } from '@/components/forms/money-field';
+import { PhotoPicker } from '@/components/drafts/photo-picker';
 import { CustomerCombobox } from '@/components/forms/customer-combobox';
 import type { CustomerSelection } from '@/components/customer-picker';
 import type { DraftRow } from '@/lib/types';
@@ -178,11 +179,11 @@ export function FinishIntakeForm({ draft, asPage = false, onClose }: { draft?: D
 
         {/* right rail */}
         <div className="flex flex-col gap-[14px] md:sticky md:top-0 md:self-start">
-          <div className="cursor-pointer rounded-[10px] border border-dashed border-line p-[22px] text-center" title="Photo upload arrives with storage wiring">
-            <Upload size={24} strokeWidth={1.8} className="mx-auto text-faint" />
-            <div className="mt-2 font-display text-[13px] font-semibold">Add photos</div>
-            <div className="mt-1 text-[12px] text-muted">Drag in or click to upload</div>
-          </div>
+          {/* TODO(photo-persistence): image storage (e.g. Supabase Storage) isn't
+              wired yet — PhotoPicker holds the selected files in form state and
+              previews them; on save they are not uploaded. Wire onChange +
+              upload here when a bucket lands. */}
+          <PhotoPicker />
           <div className="rounded-[10px] bg-ink p-[16px_18px] text-white">
             <MarginRow l="Cost" v={cost != null ? formatCents(cost) : '—'} />
             <div className="my-1 h-px" style={{ background: '#37465a' }} />
