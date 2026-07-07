@@ -1,6 +1,7 @@
 import { requireOwner } from '@/lib/server/auth';
 import { Sidebar } from '@/components/shell/sidebar';
 import { MobileNav } from '@/components/shell/mobile-nav';
+import { InstallHint } from '@/components/pwa/install-hint';
 
 // Every dashboard page is dynamic (reads live DB state) and owner-gated.
 // Desktop: left rail + canvas. Mobile: the rail is hidden and a top app-bar +
@@ -16,6 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <MobileNav />
         <main className="flex min-w-0 flex-1 flex-col overflow-auto">{children}</main>
       </div>
+      <InstallHint />
     </div>
   );
 }
