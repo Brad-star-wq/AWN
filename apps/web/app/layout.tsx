@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Nunito_Sans } from 'next/font/google';
 import './globals.css';
 
@@ -22,6 +22,16 @@ const body = Nunito_Sans({
 export const metadata: Metadata = {
   title: 'AWN Resale',
   description: 'Store-credit & buy-outright back office.',
+  applicationName: 'AWN Resale',
+  // Next auto-links /manifest.webmanifest from app/manifest.ts; naming it here is
+  // explicit and harmless.
+  manifest: '/manifest.webmanifest',
+};
+
+// themeColor lives on the viewport export in Next 14 — the ink token, so the
+// installed app's status bar / chrome matches the shell instead of white.
+export const viewport: Viewport = {
+  themeColor: '#2c353f',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
