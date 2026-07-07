@@ -62,6 +62,12 @@ export async function POST(request: NextRequest) {
     return new NextResponse('Malformed JSON', { status: 400 });
   }
 
+  // TEMPORARY DIAGNOSTIC (OTHER-tender missing-row triage): dump the full raw
+  // Square envelope, unredacted, so we can see the real payload shape a sandbox
+  // OTHER-tender payment arrives with. Pair with the [parse][diag] lines to see
+  // exactly where parsePaymentEvent classifies it IGNORED. Remove once resolved.
+  console.log(`[square-webhook][diag] raw ${event.type ?? '(no type)'} ${event.event_id ?? ''}: ${rawBody}`);
+
   // v2 attribute-on-arrival, against the pg-backed stores, sharing the engine's
   // pooler connection. Idempotent, so running inline is safe; a thrown error
   // becomes a 5xx and Square retries. The legacy pending store is passed only as

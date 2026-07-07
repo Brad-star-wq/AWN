@@ -79,11 +79,47 @@ function otherTenderCents(payment: Record<string, unknown>): number | null {
 /** A COMPLETED OTHER-tender payment → a redemption signal, else null. */
 export function parsePaymentEvent(event: Record<string, unknown>): RedemptionSignal | null {
   const payment = paymentObject(event);
-  if (!payment) return null;
-  if (payment.status !== 'COMPLETED') return null; // ignore created/approved/pending
+  if (!payment) {
+    // TEMPORARY DIAGNOSTIC (OTHER-tender missing-row triage).
+    console.warn('[parse][diag] payment IGNORED: no data.object.payment', {
+      type: event.type,
+      dataKeys: Object.keys(asRecord(event.data) ?? {}),
+    });
+    return null;
+  }
+
+  // TEMPORARY DIAGNOSTIC: the three fields that decide OTHER-tender detection —
+  // status, tenders[] shape, and source_type — for every payment event.
+  console.log('[parse][diag] payment shape', {
+    id: payment.id,
+    status: payment.status,
+    source_type: payment.source_type,
+    hasTenders: Array.isArray(payment.tenders),
+    tenders: Array.isArray(payment.tenders)
+      ? payment.tenders.map((t) => {
+          const tender = asRecord(t);
+          return { type: tender?.type, amount: asRecord(tender?.amount_money)?.amount };
+        })
+      : undefined,
+    amount_money: payment.amount_money,
+    location_id: payment.location_id,
+  });
+
+  if (payment.status !== 'COMPLETED') {
+    // ignore created/approved/pending
+    console.warn('[parse][diag] payment IGNORED: status !== COMPLETED', { status: payment.status });
+    return null;
+  }
 
   const amountCents = otherTenderCents(payment);
-  if (amountCents === null) return null; // not a store-credit (OTHER) payment
+  if (amountCents === null) {
+    // not a store-credit (OTHER) payment
+    console.warn('[parse][diag] payment IGNORED: no OTHER-tender amount', {
+      hasTenders: Array.isArray(payment.tenders),
+      source_type: payment.source_type,
+    });
+    return null;
+  }
 
   const paymentId = typeof payment.id === 'string' ? payment.id : null;
   const locationId = typeof payment.location_id === 'string' ? payment.location_id : null;
@@ -91,7 +127,14 @@ export function parsePaymentEvent(event: Record<string, unknown>): RedemptionSig
     (typeof payment.updated_at === 'string' && payment.updated_at) ||
     (typeof payment.created_at === 'string' && payment.created_at) ||
     null;
-  if (!paymentId || !locationId || !occurredAt) return null;
+  if (!paymentId || !locationId || !occurredAt) {
+    console.warn('[parse][diag] payment IGNORED: missing id/location/occurredAt', {
+      paymentId,
+      locationId,
+      occurredAt,
+    });
+    return null;
+  }
 
   return { paymentId, amountCents, locationId, occurredAt };
 }
@@ -99,8 +142,27 @@ export function parsePaymentEvent(event: Record<string, unknown>): RedemptionSig
 /** A COMPLETED refund → a refund signal, else null. */
 export function parseRefundEvent(event: Record<string, unknown>): RefundSignal | null {
   const refund = refundObject(event);
-  if (!refund) return null;
-  if (refund.status !== 'COMPLETED') return null;
+  if (!refund) {
+    // TEMPORARY DIAGNOSTIC (OTHER-tender missing-row triage).
+    console.warn('[parse][diag] refund IGNORED: no data.object.refund', {
+      type: event.type,
+      dataKeys: Object.keys(asRecord(event.data) ?? {}),
+    });
+    return null;
+  }
+
+  // TEMPORARY DIAGNOSTIC: the fields that decide refund actionability.
+  console.log('[parse][diag] refund shape', {
+    id: refund.id,
+    status: refund.status,
+    payment_id: refund.payment_id,
+    amount_money: refund.amount_money,
+  });
+
+  if (refund.status !== 'COMPLETED') {
+    console.warn('[parse][diag] refund IGNORED: status !== COMPLETED', { status: refund.status });
+    return null;
+  }
 
   const refundId = typeof refund.id === 'string' ? refund.id : null;
   const paymentId = typeof refund.payment_id === 'string' ? refund.payment_id : null;
@@ -110,7 +172,15 @@ export function parseRefundEvent(event: Record<string, unknown>): RefundSignal |
     (typeof refund.updated_at === 'string' && refund.updated_at) ||
     (typeof refund.created_at === 'string' && refund.created_at) ||
     null;
-  if (!refundId || !paymentId || amountCents === null || !occurredAt) return null;
+  if (!refundId || !paymentId || amountCents === null || !occurredAt) {
+    console.warn('[parse][diag] refund IGNORED: missing id/payment_id/amount/occurredAt', {
+      refundId,
+      paymentId,
+      amountCents,
+      occurredAt,
+    });
+    return null;
+  }
 
   return { refundId, paymentId, amountCents, occurredAt };
 }
