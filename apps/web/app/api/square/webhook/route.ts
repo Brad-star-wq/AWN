@@ -30,13 +30,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
-  // PROOF-OF-LIFE marker: this string exists ONLY in the v2 route source. If it
-  // appears in the deployed logs, `processRedemptionEvent` (attribute-on-arrival)
-  // is what answers /api/square/webhook. If logs still show `PAYMENT:NO_PENDING`
-  // with NO line below, an older v1 build is being served. First statement in the
-  // handler so it fires before signature verify / parse / any early return.
-  console.log('[v2-webhook-alive] handler=processRedemptionEvent route=apps/web/app/api/square/webhook');
-
   const signatureKey = process.env.SQUARE_WEBHOOK_SIGNATURE_KEY;
   const notificationUrl = process.env.SQUARE_WEBHOOK_NOTIFICATION_URL;
 
@@ -68,12 +61,6 @@ export async function POST(request: NextRequest) {
   } catch {
     return new NextResponse('Malformed JSON', { status: 400 });
   }
-
-  // TEMPORARY DIAGNOSTIC (OTHER-tender missing-row triage): dump the full raw
-  // Square envelope, unredacted, so we can see the real payload shape a sandbox
-  // OTHER-tender payment arrives with. Pair with the [parse][diag] lines to see
-  // exactly where parsePaymentEvent classifies it IGNORED. Remove once resolved.
-  console.log(`[square-webhook][diag] raw ${event.type ?? '(no type)'} ${event.event_id ?? ''}: ${rawBody}`);
 
   // v2 attribute-on-arrival, against the pg-backed stores, sharing the engine's
   // pooler connection. Idempotent, so running inline is safe; a thrown error
