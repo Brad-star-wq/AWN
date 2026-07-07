@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Nunito_Sans } from 'next/font/google';
 import './globals.css';
+import { RegisterSW } from '@/components/pwa/register-sw';
 
 // Locked redesign type (Coastal Slate): Inter carries UI, headings, labels,
 // buttons; Nunito Sans carries body text and every numeral (tabular). The CSS
@@ -52,7 +53,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <RegisterSW />
+      </body>
     </html>
   );
 }
