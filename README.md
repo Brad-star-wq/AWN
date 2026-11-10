@@ -1,89 +1,58 @@
-# Resale Engine
+# Resale POS — Store-Credit Ledger & Buy-Outright Back Office
 
-The POS-agnostic core of the resale back-office. It owns the things Square
-can't: the **store-credit ledger**, **intake**, **draft products**, and
-**reconciliation**. It talks to the outside world only through ports, so it
-runs against a mock today and the real Square adapter later — unchanged.
+A back-office system for a small sneaker and trading-card resale shop. When the shop buys goods from walk-in sellers, it often pays in **store credit** — and before this, every customer's balance lived in the owner's head. This app gives that money a durable, auditable home and connects it to the shop's existing **Square** register.
 
-## Design rules
+> **Status:** built and verified against the Square sandbox; not yet in daily use at the shop.
 
-- **Money is integer cents.** No floats touch the money path.
-- **The ledger is append-only.** A balance is the `SUM` of immutable, signed
-  entries (`ISSUE` positive, `REDEEM` negative) — never a stored column that
-  could drift. Corrections are new `ADJUST`/`REVERSAL` rows.
-- **Idempotent by construction.** Every external event carries an
-  idempotency key; replaying the same sale (duplicate webhook, catch-up
-  pull) can never deduct twice.
-- **Unmatched is surfaced, never dropped.** A sale with no customer, or an
-  unknown one, returns an `UNMATCHED` result for reconciliation to resolve.
+<!-- Screenshots: add 2–3 here (in-store lookup, buy flow, dashboard) -->
 
-## Structure
+## What it does
+
+- **In-store mode (mobile-first):** look up a customer, log a buy in seconds with a custom keypad, and load store credit or redeem it. Built to be used one-handed at the counter.
+- **Dashboard mode:** finish items logged in a hurry, manage customers, review end-of-day, and edit settings.
+- **Intake → drafts → Square:** items bought from sellers start as rough drafts with photos, then get pushed into Square's catalog once they're finished.
+- **Redemptions through Square:** when credit is spent at the register, a Square webhook records it, and a human attributes it to the right customer.
+- **Installable PWA** for the shop's phone or tablet.
+
+## Design decisions
+
+- **Money is integer cents.** No floating point anywhere in the money path.
+- **The ledger is append-only.** A balance is the sum of immutable signed entries — never a stored, editable number. Corrections are new reversal or adjustment entries.
+- **Idempotent by construction.** Every external event carries an idempotency key, so a retried webhook or a duplicate sale can never charge twice.
+- **POS-agnostic core (ports & adapters).** The domain logic never imports Square or Postgres. It talks to storage and the POS through interfaces, so the same engine runs against in-memory fakes in tests and against Postgres + Square in production.
+- **Fail-closed webhooks.** Square webhooks are verified with HMAC-SHA256 against the raw request body; anything that can't be verified is rejected.
+- **Unmatched is surfaced, never dropped.** Sales that can't be tied to a customer go to a reconciliation queue instead of disappearing.
+
+## Architecture
 
 ```
-db/schema.sql                          Postgres / Supabase schema (production store)
-src/domain/types.ts                    Domain types + the SaleEvent seam contract
-src/domain/ledger.ts                   The ledger: issue, redeem, applySaleEvent
-src/ports/ledgerRepository.ts          Storage port (in-memory ↔ Postgres)
-src/ports/posAdapter.ts                POS port (mock ↔ Square)
-src/adapters/inMemoryLedgerRepository  In-memory store for tests / local dev
-test/ledger.test.ts                    Correctness suite (7 tests)
+src/domain/      Ledger, intake, drafts, redemptions, reconciliation (pure logic)
+src/ports/       Interfaces for storage and the POS
+src/adapters/    In-memory, Postgres, and Square implementations of those ports
+db/              Postgres / Supabase schema
+apps/web/        Next.js dashboard + in-store UI (imports the engine server-side only)
+test/            Unit tests + repository contract tests
 ```
 
-## The two redemption modes
+Repository **contract tests** run the same suite against every storage implementation (in-memory and Postgres), so swapping storage can't silently change behavior.
 
-`redeemCredit({ ..., enforceBalance })` supports both flows discussed:
+## Stack
 
-- `true` — **app-first**: the app caps the amount, so an overdraw is
-  rejected (`OverdrawError`).
-- `false` — **Square-first**: the redemption is recorded regardless, and a
-  resulting negative balance is left for reconciliation to flag.
+TypeScript · Next.js (App Router) · React · Tailwind CSS · Supabase (Postgres + Auth) · Square APIs (Catalog, Payments, Webhooks) · Netlify · Node test runner
 
-## Run
+## Run locally
 
 ```bash
 npm install
-npm test            # offline: 41 pass + Postgres group skipped
-npx tsc --noEmit    # strict typecheck
-npm run demo        # in-memory end-to-end walkthrough, printed to the console
+npm test             # offline test suite (Postgres tests skip without a database)
+npm run typecheck
+npm run demo         # in-memory end-to-end demo: a day of buys, sales, and reconciliation
 ```
 
-`npm run demo` seeds customers via intake, completes and pushes a draft,
-generates a realistic day of mock sales (store-credit tenders, a card-only
-sale, a no-customer sale, an unknown customer, a duplicate event, an
-over-redemption), applies them, then prints balances and the reconciliation
-report.
-
-## Postgres (Phase 4)
-
-The same engine runs against real Postgres/Supabase through the same ports.
+To run against Postgres and the web app, copy `.env.example` → `.env` and `apps/web/.env.example` → `apps/web/.env.local`, fill in your own Supabase and Square sandbox values, then:
 
 ```bash
-cp .env.example .env          # then set DATABASE_URL (Supabase Session pooler URL)
-npm run db:setup              # apply db/schema.sql if absent (non-destructive)
-npm run test:pg               # run the repository contracts against Postgres
-npm run demo:pg               # persistent demo — run twice, balances carry over
+npm run db:setup     # apply the schema (non-destructive)
+npm run test:pg      # contract tests against Postgres
+npm run dev -w apps/web
 ```
-
-The repository **contract tests** in `test/contracts/` run against *any*
-implementation; `test:pg` runs them against the Postgres adapters and skips
-gracefully when `DATABASE_URL` is unset or the database is unreachable. Use the
-Supabase **Session pooler** connection string — the direct `db.<ref>.supabase.co`
-host is IPv6-only.
-
-## Status
-
-Phases 1–4 are done (see `BUILD_PLAN.md`): the **mock POS adapter** + scenario,
-**reconciliation** (`reconcileDay`), **intake + drafts** (with the
-`CustomerRepository` / `DraftRepository` ports), and **Postgres persistence**
-(`pgLedgerRepository` / `pgCustomerRepository` / `pgDraftRepository`) behind
-shared contract tests.
-
-The **owner dashboard** (Phase 6.0/6.1/6.2/6.4) lives in `apps/web` — a Next.js
-app that imports this engine **server-side only**. See `apps/web/README.md` to
-run it. The engine here stays POS-agnostic with its test suite intact.
-
-## Next
-
-- **Square adapter** — the real POS wiring, emitting the same `SaleEvent` the
-  mock does (gated on the open questions in `BUILD_PLAN.md`).
-- **Dashboard 6.3 / 6.5** — the Square webhook route and the customer storefront.

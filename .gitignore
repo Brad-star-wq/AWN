@@ -14,3 +14,12 @@ node_modules/
 !.env.example
 .next/
 dist/
+CLAUDE.md
+.claude/
+*walkthrough*.md
+*claude-code-prompt*.md
+APP_PLAN.md
+BUILD_PLAN.md
+docs/redemption-v2-log.md
+docs/resale-pos-master-spec.md
+docs/AWN-*.md
